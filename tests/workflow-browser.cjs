@@ -73,6 +73,15 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
  await scenario('sales',async page=>{await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});for(const name of ['Siapkan Pengiriman','Tandai Dikirim','Ubah Estimasi','Catat Penerimaan'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0)});
  await scenario('purchasing',async page=>{await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});assert.equal(await page.getByRole('button',{name:'Siapkan Pengiriman',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Ubah Estimasi',exact:true}).count(),1);await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});assert.equal(await page.getByRole('button',{name:'Tandai Dikirim',exact:true}).count(),1)});
  await scenario('sales',async page=>{await page.evaluate(async id=>{window.pendingPushOrder=id;await PO.refresh()},OID);await page.waitForFunction(()=>PO.state.page==='detail');assert(await page.locator('#po-barcode rect').count()>20)});
+ await scenario('admin',async page=>{
+  assert.equal(await page.locator('#bottom button').count(),5);await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:'outputs/ui-dashboard-android.png',fullPage:true});
+  await page.locator('#bottom').getByRole('button',{name:'Menu',exact:true}).click();await page.getByRole('heading',{name:'Menu aplikasi'}).waitFor();assert.equal(await page.locator('.menu-tile').count(),11);await page.screenshot({path:'outputs/ui-menu-android.png',fullPage:true});
+  await page.getByRole('button',{name:'Supplier & Sales',exact:true}).last().click();await page.getByRole('heading',{name:/Supplier.*Sales/}).waitFor();
+  await page.evaluate(()=>PO.go('orders'));assert.equal(await page.locator('.po-card:visible').count(),1);assert.match(await page.locator('.po-card:visible').innerText(),/Menunggu Konfirmasi/);
+  await page.setViewportSize({width:320,height:740});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await page.evaluate(()=>PO.go('create'));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:'outputs/ui-create-android.png',fullPage:true});
+  await page.setViewportSize({width:1366,height:900});await page.evaluate(()=>PO.go('dashboard'));assert.equal(await page.locator('.desktop-po-list:visible').count(),1);assert.equal(await page.locator('.po-card:visible').count(),0);
+ });
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
