@@ -6,6 +6,7 @@ import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 if (Capacitor.isNativePlatform()) {
  window.NativeStartup=installStartup();
+ document.documentElement.classList.remove('boot-pending');
  installPush();
  window.NativeFiles={async save(name,content,type){
   try {
@@ -27,3 +28,4 @@ if (Capacitor.isNativePlatform()) {
  });
  window.addEventListener('upu:ready',()=>{if(!window.PO&&typeof window.download==='function')window.download=(name,content,type)=>NativeFiles.save(name,content,type);});
 }
+if(!Capacitor.isNativePlatform())document.documentElement.classList.remove('boot-pending');

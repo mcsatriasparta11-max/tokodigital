@@ -1,4 +1,5 @@
 export function installStartup(){
+ if(window.UPU_STARTUP_READY)return {finish(){}};
  const panel=document.querySelector('#startup-splash');if(!panel)return {finish(){}};
  const art=panel.querySelector('img');art.src=art.dataset.src;
  panel.hidden=false;document.documentElement.classList.add('native-starting');

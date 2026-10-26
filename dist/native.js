@@ -1207,6 +1207,8 @@
 
   // src/startup.js
   function installStartup() {
+    if (window.UPU_STARTUP_READY) return { finish() {
+    } };
     const panel = document.querySelector("#startup-splash");
     if (!panel) return { finish() {
     } };
@@ -1423,6 +1425,7 @@
   // src/native.js
   if (Capacitor.isNativePlatform()) {
     window.NativeStartup = installStartup();
+    document.documentElement.classList.remove("boot-pending");
     installPush();
     window.NativeFiles = { async save(name, content, type) {
       try {
@@ -1457,6 +1460,7 @@
       if (!window.PO && typeof window.download === "function") window.download = (name, content, type) => NativeFiles.save(name, content, type);
     });
   }
+  if (!Capacitor.isNativePlatform()) document.documentElement.classList.remove("boot-pending");
 })();
 /*! Bundled license information:
 

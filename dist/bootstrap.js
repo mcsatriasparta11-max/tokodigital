@@ -16,5 +16,5 @@
   else{for(const script of ['data.js','app.js','cloud.js'])await load(script)}
   window.dispatchEvent(new Event('upu:ready'));
   if(window.PO?.ready)await window.PO.ready;
- }catch(error){const main=document.querySelector('#main');main.innerHTML='<section class="panel auth-panel"><h1>Koneksi belum tersedia</h1><p class="sub">Periksa koneksi internet, kemudian muat ulang aplikasi.</p><button class="btn primary" onclick="location.reload()">Coba lagi</button></section>';console.error(error)}finally{window.dispatchEvent(new Event('upu:startup-ready'))}
+ }catch(error){const main=document.querySelector('#main');main.innerHTML='<section class="panel auth-panel"><h1>Koneksi belum tersedia</h1><p class="sub">Periksa koneksi internet, kemudian muat ulang aplikasi.</p><button class="btn primary" onclick="location.reload()">Coba lagi</button></section>';console.error(error)}finally{window.UPU_STARTUP_READY=true;document.documentElement.classList.remove('boot-pending');window.dispatchEvent(new Event('upu:startup-ready'))}
 })();
