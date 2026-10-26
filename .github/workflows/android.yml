@@ -29,6 +29,6 @@ jobs:
           npm run android:apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Kedai-UPU-PO-v3.2.0-debug
-          path: outputs/Kedai-UPU-PO-v3.2.0-debug.apk
+          name: Kedai-UPU-PO-v3.3.0-debug
+          path: outputs/Kedai-UPU-PO-v3.3.0-debug.apk
           if-no-files-found: error
