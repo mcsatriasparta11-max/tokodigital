@@ -1360,7 +1360,7 @@
     art.src = art.dataset.src;
     panel.hidden = false;
     document.documentElement.classList.add("native-starting");
-    const barsHidden = Promise.resolve().then(() => systemBars?.hide()).catch(() => {
+    Promise.resolve().then(() => systemBars?.hide()).catch(() => {
     });
     const start = Date.now();
     let finished = false;
@@ -1376,8 +1376,6 @@
       finished = true;
       clearTimeout(slow);
       setTimeout(() => {
-        barsHidden.then(() => systemBars?.show()).catch(() => {
-        });
         panel.classList.add("startup-leaving");
         panel.setAttribute("aria-busy", "false");
         setTimeout(() => {
