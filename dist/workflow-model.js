@@ -2,7 +2,7 @@
  'use strict';
  const labels={Draft:'Draft',AwaitingConfirmation:'Menunggu Konfirmasi',Confirmed:'Dikonfirmasi',Shipped:'Dikirim',Received:'Diterima',Completed:'Selesai'};
  function actions(role,status){
-  const internal=['admin','purchasing'].includes(role),sales=['admin','sales'].includes(role),out=[];
+  const internal=['admin','purchasing'].includes(role),sales=['admin','purchasing','sales'].includes(role),out=[];
   if(internal&&status==='Draft')out.push('edit','publish');
   if(sales&&status==='AwaitingConfirmation')out.push('confirm');
   if(internal&&['Confirmed','Shipped'].includes(status))out.push('eta');
