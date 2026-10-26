@@ -1,0 +1,7 @@
+{
+  "name": "kedai-upu-po",
+  "private": true,
+  "version": "2.0.0",
+  "scripts": { "test": "node check.cjs && node --test tests/*.test.cjs" },
+  "devDependencies": { "@electric-sql/pglite": "0.5.11" }
+}

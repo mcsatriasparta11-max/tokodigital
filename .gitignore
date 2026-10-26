@@ -1,3 +1,7 @@
 outputs/
 node_modules/
 .openai/
+.env
+.env.*
+!.env.example
+supabase/.temp/
