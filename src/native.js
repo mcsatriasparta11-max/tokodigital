@@ -18,7 +18,7 @@ if (Capacitor.isNativePlatform()) {
  }};
  App.addListener('backButton',()=>{
   if(document.body.classList.contains('cloud-busy'))return;
-  const dialog=document.querySelector('#modal');
+  const dialog=document.querySelector('dialog[open]');
   if(dialog?.open){dialog.close();return;}
   if(window.PO&&PO.state.page!=='dashboard'){PO.go('dashboard');return;}
   if(window.confirm('Keluar dari aplikasi Kedai UPU?'))App.exitApp();

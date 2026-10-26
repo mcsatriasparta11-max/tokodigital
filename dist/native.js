@@ -1441,7 +1441,7 @@
     } };
     App.addListener("backButton", () => {
       if (document.body.classList.contains("cloud-busy")) return;
-      const dialog = document.querySelector("#modal");
+      const dialog = document.querySelector("dialog[open]");
       if (dialog?.open) {
         dialog.close();
         return;
