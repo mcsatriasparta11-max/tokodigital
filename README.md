@@ -36,3 +36,4 @@ npm run android:apk
 Pada PowerShell dengan pembatasan skrip gunakan `npm.cmd`. Pengujian browser memakai Microsoft Edge lokal; untuk lingkungan lain tentukan `BROWSER_EXECUTABLE` ke Chromium yang tersedia. Pengujian database memakai PGlite, sedangkan skenario browser memakai API mock dan tidak mengubah data produksi.
 
 Tidak memerlukan build web. `npm run build:native` menghasilkan adapter Capacitor `dist/native.js`. `npm run android:sync` menyalin `dist` ke proyek Android. SDK Supabase disertakan lokal; library Excel dan font masih membutuhkan internet. Penyimpanan bersama dan login memerlukan koneksi internet.
+Panduan [impor master produk dan konversi kemasan](docs/PRODUCT-IMPORT.md).
