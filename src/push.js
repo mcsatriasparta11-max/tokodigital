@@ -7,6 +7,7 @@ export function installPush(){
  PushNotifications.addListener('registrationError',()=>{status('Firebase belum terhubung. Hubungi pengelola aplikasi.')});
  PushNotifications.addListener('pushNotificationReceived',()=>{window.PO?.refresh(true)});
  PushNotifications.addListener('pushNotificationActionPerformed',async({notification})=>{
+  if(notification.data?.screen==='chat'){const room=notification.data?.supplier_id;if(typeof room!=='string'||!/^[A-Za-z0-9_-]{1,120}$/.test(room))return;window.pendingPushScreen='chat';window.pendingPushSupplier=room;if(window.PO?.state.data?.me)await window.PO.refresh();return}
   if(notification.data?.screen==='users'){window.pendingPushScreen='users';if(window.PO?.state.data?.me)await window.PO.refresh();return}
   const id=notification.data?.order_id;if(typeof id!=='string'||!/^[0-9a-f-]{36}$/i.test(id))return;
   window.pendingPushOrder=id;if(window.PO?.state.data?.me)await window.PO.refresh();
@@ -24,7 +25,7 @@ export function installPush(){
    // Do not sign out if server-side token removal fails; avoid delivery to the previous account.
    enabled=false;generation++;await pendingSave;
    if(token&&client){const {error}=await client.rpc('po_push_unregister',{device_token:token});if(error){enabled=true;throw Error('Belum dapat menonaktifkan notifikasi. Periksa koneksi sebelum keluar.')}}
-   token=null;localStorage.removeItem('upu-push-token');localStorage.removeItem('upu-push-user');user=null;workspace=null;client=null;window.pendingPushOrder=null;window.pendingPushScreen=null;
+   token=null;localStorage.removeItem('upu-push-token');localStorage.removeItem('upu-push-user');user=null;workspace=null;client=null;window.pendingPushOrder=null;window.pendingPushScreen=null;window.pendingPushSupplier=null;
    try{await PushNotifications.removeAllDeliveredNotifications();await PushNotifications.unregister()}catch{}
    status('Notifikasi Android dinonaktifkan.');
   }

@@ -1425,6 +1425,14 @@
       window.PO?.refresh(true);
     });
     PushNotifications.addListener("pushNotificationActionPerformed", async ({ notification }) => {
+      if (notification.data?.screen === "chat") {
+        const room = notification.data?.supplier_id;
+        if (typeof room !== "string" || !/^[A-Za-z0-9_-]{1,120}$/.test(room)) return;
+        window.pendingPushScreen = "chat";
+        window.pendingPushSupplier = room;
+        if (window.PO?.state.data?.me) await window.PO.refresh();
+        return;
+      }
       if (notification.data?.screen === "users") {
         window.pendingPushScreen = "users";
         if (window.PO?.state.data?.me) await window.PO.refresh();
@@ -1486,6 +1494,7 @@
         client = null;
         window.pendingPushOrder = null;
         window.pendingPushScreen = null;
+        window.pendingPushSupplier = null;
         try {
           await PushNotifications.removeAllDeliveredNotifications();
           await PushNotifications.unregister();
