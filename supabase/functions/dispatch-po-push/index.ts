@@ -14,21 +14,21 @@ Deno.serve(async req=>{
   const auth=await fetch('https://oauth2.googleapis.com/token',{method:'POST',body:new URLSearchParams({grant_type:'urn:ietf:params:oauth:grant-type:jwt-bearer',assertion}),signal:AbortSignal.timeout(15000)});
   const authBody=await auth.json();if(!auth.ok||!authBody.access_token)throw Error('Firebase authentication failed');
   const {data:jobs,error}=await db.rpc('po_push_claim');if(error)throw Error('Queue unavailable');
-  let sent=0,failed=0;
+  let sent=0,failed=0;const errors:Record<string,number>={};
   // Stable Android notification tag replaces duplicate deliveries if a worker retries after a crash.
-  await Promise.all((jobs||[]).map(async (job:{job_id:string;claim_id:string;device_token:string;order_id:string})=>{
-   let delivered=false,invalid=false;
+  await Promise.all((jobs||[]).map(async (job:{job_id:string;claim_id:string;device_token:string;order_id:string|null;kind?:string;title?:string})=>{
+   let delivered=false,invalid=false,errorCode='NETWORK';
    try{
     const response=await fetch('https://fcm.googleapis.com/v1/projects/'+encodeURIComponent(account.project_id)+'/messages:send',{
      method:'POST',headers:{Authorization:'Bearer '+authBody.access_token,'Content-Type':'application/json'},
-     body:JSON.stringify({message:{token:job.device_token,notification:{title:'Kedai UPU - Pembaruan PO',body:'Ada PO baru atau perubahan status. Buka aplikasi untuk melihat detail.'},data:{order_id:job.order_id},android:{priority:'HIGH',ttl:'3600s',notification:{channel_id:'upu-po',tag:job.job_id,icon:'ic_push',sound:'default'}}}}),signal:AbortSignal.timeout(15000)
+     body:JSON.stringify({message:{token:job.device_token,notification:{title:job.kind==='registration'?'Permintaan Tinjau Akun':(['PO Baru','PO Dikonfirmasi','PO Dikirim','PO Diterima','PO Selesai'].includes(job.title||'')?job.title:'Kedai UPU - Pembaruan PO'),body:job.kind==='registration'?'Ada pendaftaran akun baru. Buka menu User untuk meninjau.':'Ada PO baru atau perubahan status. Buka aplikasi untuk melihat detail.'},data:job.kind==='registration'?{screen:'users'}:{order_id:job.order_id},android:{priority:'HIGH',ttl:'3600s',notification:{channel_id:'upu-po-v2',tag:job.job_id,icon:'ic_push'}}}}),signal:AbortSignal.timeout(15000)
     });
     const result=await response.json();delivered=response.ok;
-    invalid=(result.error?.details||[]).some((d:{errorCode?:string})=>d.errorCode==='UNREGISTERED');
+    const detail=(result.error?.details||[]).find((d:{errorCode?:string})=>d.errorCode);errorCode=detail?.errorCode||result.error?.status||'UNKNOWN';invalid=errorCode==='UNREGISTERED';
    }catch{/* Network failures return to the durable retry queue. */}
    const finished=await db.rpc('po_push_finish',{job:job.job_id,claim:job.claim_id,sent:delivered,invalid_token:invalid});
-   if(delivered&&!finished.error)sent++;else failed++;
+   if(delivered&&!finished.error)sent++;else{failed++;const code=finished.error?'QUEUE_FINISH':errorCode;errors[code]=(errors[code]||0)+1}
   }));
-  return Response.json({sent,failed});
+  return Response.json({sent,failed,errors});
  }catch{return new Response('Dispatch unavailable; queued notifications retained',{status:503})}
 });

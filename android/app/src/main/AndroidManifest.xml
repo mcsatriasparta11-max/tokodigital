@@ -10,7 +10,7 @@
         android:theme="@style/AppTheme">
 
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_push" />
-        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="upu-po" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="upu-po-v2" />
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"

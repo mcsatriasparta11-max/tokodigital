@@ -11,7 +11,7 @@
    else if(body.code!=='PGRST205'&&body.code!=='42P01')throw Error('Koneksi database belum dapat diperiksa. Coba lagi.');
   }
   window.UPU_WORKFLOW_V2=v2;
-  if(v2){await load('workflow-model.js');await load('workflow.js')}
+  if(v2){await load('workflow-model.js');await load('live.js');await load('workflow.js')}
   else{for(const script of ['data.js','app.js','cloud.js'])await load(script)}
   window.dispatchEvent(new Event('upu:ready')); 
  }catch(error){const main=document.querySelector('#main');main.innerHTML='<section class="panel auth-panel"><h1>Koneksi belum tersedia</h1><p class="sub">Periksa koneksi internet, kemudian muat ulang aplikasi.</p><button class="btn primary" onclick="location.reload()">Coba lagi</button></section>';console.error(error)}

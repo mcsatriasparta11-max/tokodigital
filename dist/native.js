@@ -1238,9 +1238,14 @@
       status("Firebase belum terhubung. Hubungi pengelola aplikasi.");
     });
     PushNotifications.addListener("pushNotificationReceived", () => {
-      window.PO?.refresh();
+      window.PO?.refresh(true);
     });
     PushNotifications.addListener("pushNotificationActionPerformed", async ({ notification }) => {
+      if (notification.data?.screen === "users") {
+        window.pendingPushScreen = "users";
+        if (window.PO?.state.data?.me) await window.PO.refresh();
+        return;
+      }
       const id = notification.data?.order_id;
       if (typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)) return;
       window.pendingPushOrder = id;
@@ -1253,7 +1258,7 @@
         workspace = w;
         user = id;
         if (window.pushStatus) status(window.pushStatus);
-        if (changed && localStorage.getItem("upu-push-user") === id) this.enable().catch(() => {
+        if (changed) this.enable().catch(() => {
         });
       },
       async enable() {
@@ -1269,7 +1274,7 @@
             status("Izin notifikasi belum diberikan. Aktifkan melalui Pengaturan Android.");
             throw Error("Izin notifikasi belum diberikan.");
           }
-          await PushNotifications.createChannel({ id: "upu-po", name: "Purchase Order", description: "PO baru dan pembaruan status", importance: 5, visibility: 0, sound: "default" });
+          await PushNotifications.createChannel({ id: "upu-po-v2", name: "Purchase Order", description: "PO baru dan pembaruan status", importance: 5, visibility: 0 });
           if (run !== generation) return;
           enabled = true;
           status("Menghubungkan perangkat ke Firebase...");
@@ -1296,6 +1301,7 @@
         workspace = null;
         client = null;
         window.pendingPushOrder = null;
+        window.pendingPushScreen = null;
         try {
           await PushNotifications.removeAllDeliveredNotifications();
           await PushNotifications.unregister();
