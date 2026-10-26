@@ -9,7 +9,7 @@ Implementasi mengikuti `docs/BLUEPRINT.txt`. Web dan Android menggunakan UI Java
 | Membuat / mengedit Draft dan menerbitkan | Ya | Tidak | Ya |
 | Melihat PO | Semua di workspace | Supplier tanggung jawabnya; Draft disembunyikan | Semua di workspace |
 | Konfirmasi + estimasi antar | Tidak | Ya | Ya, sebagai pengelola |
-| Ubah estimasi / siapkan / kirim barang | Ya | Tidak | Ya |
+| Ubah estimasi / kirim barang | Ya | Tidak | Ya |
 | Catat penerimaan / selesai | Ya | Tidak | Ya |
 | Kelola user, supplier, mapping dan produk | Tidak | Tidak | Ya |
 
@@ -21,13 +21,12 @@ Satu supplier memiliki satu Sales aktif. Satu Sales dapat menangani beberapa sup
 flowchart TD
  D[Draft] -->|Purchasing: Terbitkan PO| A[Menunggu Konfirmasi]
  A -->|Sales: konfirmasi dan wajib isi estimasi| C[Dikonfirmasi]
- C -->|Purchasing/Admin: Siapkan Pengiriman| W[Menunggu Pengiriman]
- W -->|Purchasing/Admin: Tandai Dikirim| S[Dikirim]
+ C -->|Purchasing/Admin: Tandai Dikirim| S[Dikirim]
  S -->|Purchasing: Catat Penerimaan| R[Diterima]
  R -->|Purchasing: Selesaikan PO| F[Selesai]
 ```
 
-Penerbitan mensyaratkan supplier aktif dengan mapping Sales aktif. Status tidak dapat dilompati atau dimundurkan. Estimasi dapat diperbarui oleh Purchasing/Admin selama Dikonfirmasi / Menunggu Pengiriman / Dikirim, dengan riwayat perubahan. Terlambat dihitung bila estimasi sudah lewat dan barang belum diterima.
+Penerbitan mensyaratkan supplier aktif dengan mapping Sales aktif. Status tidak dapat dilompati atau dimundurkan. Estimasi dapat diperbarui oleh Purchasing/Admin selama Dikonfirmasi > Dikirim, dengan riwayat perubahan. Terlambat dihitung bila estimasi sudah lewat dan barang belum diterima.
 
 Nomor PO unik dibuat server. Tanggal penomoran menggunakan Asia/Jakarta. Barang menyimpan nama dan satuan saat PO dibuat; perubahan master tidak mengubah barang pada PO lama.
 
@@ -68,4 +67,6 @@ Migrasi mempertahankan dokumen JSON lama sebagai arsip, menyalin supplier, produ
 - `tests/workflow-browser.cjs`: lima skenario browser nyata pada viewport HP, dengan API mock; tidak mengubah data produksi.
 
 Pengujian PostgreSQL menggunakan PGlite. Pengujian ini tidak menggantikan pemeriksaan dua akun sungguhan setelah migrasi produksi dijalankan. UI mengambil seluruh data yang diizinkan role untuk V1 tim kecil; pagination dan push dapat ditambahkan bila volume meningkat.
-Perubahan hak akses pengiriman: Sales hanya mengonfirmasi PO dengan estimasi awal. Purchasing/Admin menangani perubahan estimasi, menunggu pengiriman, dikirim, diterima, dan selesai. Aktifkan migrasi 202610260006_delivery_permissions.sql (salinan lokal .openai/enable-delivery-permissions.sql).
+Perubahan hak akses pengiriman: Sales hanya mengonfirmasi PO dengan estimasi awal. Purchasing/Admin menangani perubahan estimasi, dikirim, diterima, dan selesai. Aktifkan migrasi 202610260006_delivery_permissions.sql (salinan lokal .openai/enable-delivery-permissions.sql).
+
+Tahap Menunggu Pengiriman dihapus. Setelah Dikonfirmasi, Purchasing/Admin langsung menandai Dikirim. Aktifkan 202610260007_direct_shipping.sql (salinan lokal .openai/enable-direct-shipping.sql); PO lama di tahap yang dihapus dipindahkan ke Dikonfirmasi, dengan timeline dan versi diperbarui.

@@ -6,7 +6,7 @@ Situs: https://mcsatriasparta11-max.github.io/tokodigital/
 
 ## Alur sesuai blueprint
 
-Draft → Menunggu Konfirmasi → Dikonfirmasi → Menunggu Pengiriman → Dikirim → Diterima → Selesai.
+Draft → Menunggu Konfirmasi → Dikonfirmasi > Dikirim → Diterima → Selesai.
 
 Purchasing membuat dan menerbitkan PO. PO masuk ke Sales sesuai mapping supplier. Sales mengonfirmasi dan wajib mengisi estimasi pengantaran. Purchasing/Admin mencatat progres pengiriman, penerimaan dan penyelesaian. Admin mengelola user, supplier, produk, dan mapping. Sales tidak dapat melihat Draft atau PO supplier lain; pembatasan berlaku di server melalui RLS.
 
@@ -38,4 +38,6 @@ Pada PowerShell dengan pembatasan skrip gunakan `npm.cmd`. Pengujian browser mem
 Tidak memerlukan build web. `npm run build:native` menghasilkan adapter Capacitor `dist/native.js`. `npm run android:sync` menyalin `dist` ke proyek Android. SDK Supabase disertakan lokal; library Excel dan font masih membutuhkan internet. Penyimpanan bersama dan login memerlukan koneksi internet.
 Panduan [impor master produk dan konversi kemasan](docs/PRODUCT-IMPORT.md).
 
-Perubahan hak akses pengiriman: Sales hanya mengonfirmasi PO dengan estimasi awal. Purchasing/Admin menangani perubahan estimasi, menunggu pengiriman, dikirim, diterima, dan selesai. Aktifkan migrasi 202610260006_delivery_permissions.sql (salinan lokal .openai/enable-delivery-permissions.sql).
+Perubahan hak akses pengiriman: Sales hanya mengonfirmasi PO dengan estimasi awal. Purchasing/Admin menangani perubahan estimasi, dikirim, diterima, dan selesai. Aktifkan migrasi 202610260006_delivery_permissions.sql (salinan lokal .openai/enable-delivery-permissions.sql).
+
+Tahap Menunggu Pengiriman dihapus. Setelah Dikonfirmasi, Purchasing/Admin langsung menandai Dikirim. Aktifkan 202610260007_direct_shipping.sql (salinan lokal .openai/enable-direct-shipping.sql); PO lama di tahap yang dihapus dipindahkan ke Dikonfirmasi, dengan timeline dan versi diperbarui.

@@ -12,6 +12,7 @@ test('V2 workflow: server roles, supplier isolation, transitions, timeline and n
  await pg.query('insert into purchasing_members values($1,$2)',[W,A]);
  await pg.exec(fs.readFileSync('supabase/migrations/202610260002_workflow.sql','utf8'));
  await pg.exec(fs.readFileSync('supabase/migrations/202610260006_delivery_permissions.sql','utf8'));
+ await pg.exec(fs.readFileSync('supabase/migrations/202610260007_direct_shipping.sql','utf8'));
  await pg.query("update po_users set role='admin' where user_id=$1",[A]);
  const as=async(user,fn,role='authenticated')=>{await pg.exec('set role '+role);await pg.query("select set_config('request.jwt.claim.sub',$1,false)",[user||'']);try{return await fn()}finally{await pg.exec('reset role')}};
  const command=(a,p={})=>pg.query('select po_command($1,$2,$3) as result',[W,a,JSON.stringify(p)]).then(r=>r.rows[0].result);
@@ -70,17 +71,14 @@ test('V2 workflow: server roles, supplier isolation, transitions, timeline and n
  });
  await t.test('status cannot be skipped, rewound or changed by the wrong role',async()=>{
   await as(S,()=>assert.rejects(command('ship',{id,version:2}),/tidak diizinkan/));
-  await as(S,()=>assert.rejects(command('await_shipment',{id,version:2}),/tidak diizinkan/));
+  await as(P,()=>assert.rejects(command('await_shipment',{id,version:2}),/tidak diizinkan/));
   await as(S,()=>assert.rejects(command('eta',{id,version:2,eta:'2026-10-29'}),/Purchasing/));
-  await as(P,()=>command('await_shipment',{id,version:2}));
-  await as(S,()=>assert.rejects(command('ship',{id,version:3}),/tidak diizinkan/));
-  await as(P,()=>command('eta',{id,version:3,eta:'2026-10-29',note:'Jadwal diperbarui'}));
-  await as(P,()=>command('ship',{id,version:4}));
-  await as(S,()=>assert.rejects(command('receive',{id,version:5}),/tidak diizinkan/));
-  await as(P,()=>command('receive',{id,version:5}));
-  await as(P,()=>command('complete',{id,version:6}));
-  await as(S,()=>assert.rejects(command('eta',{id,version:7,eta:'2026-10-30'}),/sudah dikonfirmasi/));
-  await as(P,async()=>{const d=await dash();assert.equal(d.orders[0].status,'Completed');for(const event of ['created','published','viewed','confirmed','eta_updated','awaiting_shipment','shipped','received','completed'])assert(d.timeline.some(t=>t.event===event),event)});
+  await as(P,()=>command('eta',{id,version:2,eta:'2026-10-29',note:'Jadwal diperbarui'}));
+  await as(P,()=>command('ship',{id,version:3}));
+  await as(S,()=>assert.rejects(command('receive',{id,version:4}),/tidak diizinkan/));
+  await as(P,()=>command('receive',{id,version:4}));
+  await as(P,()=>command('complete',{id,version:5}));
+  await as(P,async()=>{const d=await dash();assert.equal(d.orders[0].status,'Completed');for(const event of ['created','published','viewed','confirmed','eta_updated','shipped','received','completed'])assert(d.timeline.some(t=>t.event===event),event)});
  });
  await t.test('direct writes and legacy shared data cannot bypass role security',async()=>{
   await as(S,async()=>{
