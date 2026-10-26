@@ -43,7 +43,7 @@
    if(!/^[A-Za-z0-9_-]{1,120}$/.test(id)||!name||name.length>120)throw Error('Baris '+(index+2)+': kode atau nama barang tidak valid.');
    if(seen.has(id))throw Error('Baris '+(index+2)+': kode produk '+id+' duplikat.');seen.add(id);
    const matches=suppliers.filter(s=>s.active&&(s.id===supplier||s.name===supplier));
-   if(matches.length!==1)throw Error('Baris '+(index+2)+': suplier harus cocok dengan kode atau nama supplier aktif yang unik.');
+   if(matches.length!==1)throw Error('Baris '+(index+2)+': suplier harus cocok dengan kode atau nama suplier aktif yang unik.');
    const existing=products.find(p=>p.id===id);
    if(existing&&existing.supplier_id!==matches[0].id)throw Error('Baris '+(index+2)+': kode '+id+' sudah digunakan pada supplier lain.');
    let pack;try{pack=parsePack(row['kelp-satuan'],row['kelp-volume'])}catch(e){throw Error('Baris '+(index+2)+': '+e.message)}
@@ -54,9 +54,9 @@
   if(!Array.isArray(rows)||!rows.length||rows.length>10000)throw Error('File harus berisi 1-10.000 supplier.');
   const seen=new Set();return rows.map((source,index)=>{
    const row=Object.fromEntries(Object.entries(source).map(([k,v])=>[k.replace(/^\uFEFF/,'').trim().toLowerCase(),v]));
-   if(!Object.hasOwn(row,'kode')||!Object.hasOwn(row,'nama supplier'))throw Error('Kolom wajib: kode,nama supplier');
-   const id=String(row.kode??'').trim(),name=String(row['nama supplier']??'').trim();
-   if(!/^[A-Za-z0-9_-]{1,120}$/.test(id)||!name||name.length>120)throw Error('Baris '+(index+2)+': kode atau nama supplier tidak valid.');
+   if(!Object.hasOwn(row,'kode')||!Object.hasOwn(row,'nama suplier'))throw Error('Kolom wajib: kode,nama suplier');
+   const id=String(row.kode??'').trim(),name=String(row['nama suplier']??'').trim();
+   if(!/^[A-Za-z0-9_-]{1,120}$/.test(id)||!name||name.length>120)throw Error('Baris '+(index+2)+': kode atau nama suplier tidak valid.');
    if(seen.has(id))throw Error('Baris '+(index+2)+': kode supplier duplikat.');seen.add(id);return {id,name};
   });
  }

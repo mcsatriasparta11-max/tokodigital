@@ -1,9 +1,9 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
 const M=require('../dist/workflow-model.js'),W='11111111-1111-4111-8111-111111111111',A='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',P='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 test('supplier parser preserves codes and rejects missing headers and duplicates',()=>{
- assert.deepEqual(M.parseSupplierImport([{kode:'0001','nama supplier':'PT Baru'}]),[{id:'0001',name:'PT Baru'}]);
+ assert.deepEqual(M.parseSupplierImport([{kode:'0001','nama suplier':'PT Baru'}]),[{id:'0001',name:'PT Baru'}]);
  assert.throws(()=>M.parseSupplierImport([{kode:'S',nama:'X'}]),/Kolom wajib/);
- assert.throws(()=>M.parseSupplierImport([{kode:'S','nama supplier':'X'},{kode:'S','nama supplier':'Y'}]),/duplikat/);
+ assert.throws(()=>M.parseSupplierImport([{kode:'S','nama suplier':'X'},{kode:'S','nama suplier':'Y'}]),/duplikat/);
 });
 test('supplier import enforces Admin, atomicity and preserves mapping and status',async()=>{
  const pg=new PGlite();await pg.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to anon,authenticated;grant execute on function auth.uid() to anon,authenticated;`);

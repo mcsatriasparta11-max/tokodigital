@@ -64,7 +64,7 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
  await scenario('purchasing',async page=>{await page.evaluate(()=>PO.go('import'));await page.waitForFunction(()=>PO.state.page==='dashboard');assert.equal(await page.locator('#sidebar').getByText('Import Produk',{exact:true}).count(),0)});
  await scenario('admin',async page=>{
   await page.evaluate(()=>PO.go('suppliers'));await page.getByRole('button',{name:'Import Excel',exact:true}).click();await page.waitForFunction(()=>!!window.XLSX);
-  await page.getByLabel('File supplier').setInputFiles({name:'suppliers.csv',mimeType:'text/csv',buffer:Buffer.from('kode,nama supplier\r\n0007,PT Baru\r\nSUP1,PT Updated\r\n')});
+  await page.getByLabel('File supplier').setInputFiles({name:'suppliers.csv',mimeType:'text/csv',buffer:Buffer.from('kode,nama suplier\r\n0007,PT Baru\r\nSUP1,PT Updated\r\n')});
   await page.getByRole('button',{name:'Simpan Supplier',exact:true}).waitFor();assert.match(await page.locator('#supplier-import-review').innerText(),/0007/);
   await page.getByRole('button',{name:'Simpan Supplier',exact:true}).click();await page.waitForFunction(()=>PO.state.page==='suppliers');
   const suppliers=await page.evaluate(()=>PO.state.data.suppliers);assert.equal(suppliers.find(s=>s.id==='SUP1').sales_id,UID);assert.equal(suppliers.find(s=>s.id==='0007').name,'PT Baru');
