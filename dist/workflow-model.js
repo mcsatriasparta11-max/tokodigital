@@ -50,6 +50,16 @@
    return {id,name,supplier_id:matches[0].id,pack_units:pack.units,pack_factors:pack.factors};
   });
  }
- root.POModel={labels,actions,today,late,validateItems,parsePack,productPack,parseProductImport};
+ function parseSupplierImport(rows){
+  if(!Array.isArray(rows)||!rows.length||rows.length>10000)throw Error('File harus berisi 1-10.000 supplier.');
+  const seen=new Set();return rows.map((source,index)=>{
+   const row=Object.fromEntries(Object.entries(source).map(([k,v])=>[k.replace(/^\uFEFF/,'').trim().toLowerCase(),v]));
+   if(!Object.hasOwn(row,'kode')||!Object.hasOwn(row,'nama supplier'))throw Error('Kolom wajib: kode,nama supplier');
+   const id=String(row.kode??'').trim(),name=String(row['nama supplier']??'').trim();
+   if(!/^[A-Za-z0-9_-]{1,120}$/.test(id)||!name||name.length>120)throw Error('Baris '+(index+2)+': kode atau nama supplier tidak valid.');
+   if(seen.has(id))throw Error('Baris '+(index+2)+': kode supplier duplikat.');seen.add(id);return {id,name};
+  });
+ }
+ root.POModel={labels,actions,today,late,validateItems,parseSupplierImport,parsePack,productPack,parseProductImport};
  if(typeof module!=='undefined')module.exports=root.POModel;
 })(globalThis);
