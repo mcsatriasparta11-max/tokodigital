@@ -43,7 +43,7 @@ Timeline mencatat aktor, waktu server, dan peristiwa. Pembukaan PO pertama oleh 
 - RLS membatasi SELECT langsung dan respons dashboard per workspace/supplier. Tidak ada hak tulis langsung untuk browser.
 - `po_command` menjalankan tindakan, timeline, dan notifikasi dalam transaksi. Lock workspace mencegah mapping/role berubah bersamaan dengan penerbitan atau konfirmasi. Versi per PO menolak formulir lama.
 - Request ID melindungi pembuatan PO dan impor dari duplikasi saat respons jaringan terputus. Impor semua supplier bersifat atomik, maksimal 100 supplier / 10.000 baris / 5 MB file.
-- Akses akun Auth tidak otomatis memberi peran. Admin mendaftarkan akun yang sudah dibuat di Supabase Authentication, tanpa memasukkan password di aplikasi.
+- Akses akun Auth tidak otomatis memberi peran. Pengguna dapat mendaftar sendiri; Admin dapat membuat akun dari aplikasi atau menyetujui pendaftaran. Password hanya dikirim ke Supabase Auth melalui HTTPS; tidak masuk ke RPC bisnis atau tabel role. Lihat `docs/REGISTRATION.md`.
 - Backup JSON V2 merupakan ekspor data yang boleh dilihat akun tersebut, bukan alat menimpa seluruh database. Pemulihan dan pengubahan audit dilakukan pengelola database, bukan Sales.
 
 ## Mengaktifkan pada proyek Supabase yang sudah ada
@@ -52,7 +52,7 @@ Timeline mencatat aktor, waktu server, dan peristiwa. Pembukaan PO pertama oleh 
 2. Jalankan migrasi `supabase/migrations/202610260002_workflow.sql` satu kali setelah migrasi pertama. Jangan menjalankan ulang pada database yang sudah memiliki tabel `po_*`.
 3. Berikan peran Admin pertama melalui SQL Editor sebagai pemilik proyek. Pada workspace ini tersedia skrip lokal `.openai/activate-blueprint.sql` yang menggabungkan migrasi dan bootstrap email pengelola dalam satu transaksi. Gunakan skrip gabungan itu sebagai pengganti langkah 2 dan 3, bukan menjalankan keduanya.
 4. Refresh web / buka ulang Android. Bootstrap mendeteksi skema baru dan memuat UI V2. Sebelum migrasi tersedia, UI lama tetap digunakan. Kegagalan jaringan tidak mengalihkan ke data lokal.
-5. Admin membuat akun Auth untuk Purchasing dan Sales di dashboard Supabase, lalu mendaftarkan perannya melalui menu User aplikasi.
+5. Admin membuat akun Purchasing/Sales langsung melalui menu User → Buat Akun Baru, atau menyetujui akun yang mendaftar sendiri.
 6. Admin memetakan Supplier → Sales. Purchasing membuat dan menerbitkan PO. Sales masuk dari perangkat lain untuk konfirmasi dan mengisi estimasi.
 
 Migrasi mempertahankan dokumen JSON lama sebagai arsip, menyalin supplier, produk dan PO ke tabel baru, serta menutup API dokumen bersama agar tidak menjadi jalur bagi Sales untuk melihat supplier lain. Status lama: Draft→Draft, Sent→Menunggu Konfirmasi, Confirmed→Dikonfirmasi, Delivered→Selesai. Mapping Sales harus diisi Admin. Identitas konfirmasi dan waktu historis tidak dikarang; timeline menandai data yang diimpor. Anggota lama diberi role Purchasing; bootstrap terpisah diperlukan untuk Admin pertama.

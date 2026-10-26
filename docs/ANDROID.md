@@ -1,6 +1,6 @@
 # Android Kedai UPU PO
 
-Package: `id.kedaiupu.purchasing`. Nama: Kedai UPU PO. Versi: 3.0.0. Runtime Capacitor 8; minimum Android 7/API 24; target API 36.
+Package: `id.kedaiupu.purchasing`. Nama: Kedai UPU PO. Versi: 3.1.0. Runtime Capacitor 8; minimum Android 7/API 24; target API 36.
 
 Aplikasi memuat aset `dist` dari paket APK, bukan membuka situs GitHub dalam browser. Login dan data memakai proyek Supabase yang sama dengan web. Bootstrap mendeteksi apakah migrasi workflow V2 sudah terpasang. Bila belum, UI lama digunakan; setelah migrasi aktif, buka ulang aplikasi untuk memuat alur Purchasing/Sales/Admin.
 
@@ -24,7 +24,7 @@ npm run android:apk
 
 Jika perlu tentukan `JAVA_HOME` ke JDK 21 dan `ANDROID_HOME` ke direktori SDK. Script mencoba mendeteksi Java dari perintah `java`. Di Windows SDK default dicari di `%LOCALAPPDATA%/Android/Sdk`. Lokasi SDK hanya ditulis ke `android/local.properties`, yang tidak disertakan di Git.
 
-Hasil: `outputs/Kedai-UPU-PO-v3-debug.apk`. Berkas APK ini adalah build debug untuk pemasangan/pengujian langsung; belum berupa rilis Play Store. Publikasi Play Store memerlukan application signing dan AAB rilis dengan keystore milik pengelola. Jangan mengunggah keystore/password penandatanganan ke repositori.
+Hasil: `outputs/Kedai-UPU-PO-v3.1-debug.apk`. Berkas APK ini adalah build debug untuk pemasangan/pengujian langsung; belum berupa rilis Play Store. Publikasi Play Store memerlukan application signing dan AAB rilis dengan keystore milik pengelola. Jangan mengunggah keystore/password penandatanganan ke repositori.
 
 Proyek dapat dibuka dengan `npm run android:open`. Setelah mengubah file web, jalankan `npm run android:sync` sebelum build.
 

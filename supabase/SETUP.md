@@ -1,5 +1,7 @@
 # Menyiapkan Supabase untuk Kedai UPU
 
+Panduan ini mencakup setup awal. Versi 3.1 sudah mendukung pendaftaran akun langsung di aplikasi; lihat `docs/REGISTRATION.md` dan gunakan migrasi tambahan 202610260003 untuk daftar persetujuan.
+
 Status paket ini: integrasi dan migrasi tersedia; proyek database online harus dibuat dan dikonfigurasi terlebih dahulu. Tidak ada password atau service_role key di aplikasi.
 
 ## 1. Buat proyek milik Anda

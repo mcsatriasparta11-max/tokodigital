@@ -20,7 +20,7 @@ Versi baru membutuhkan migrasi `supabase/migrations/202610260002_workflow.sql` s
 
 Sebelum migrasi kedua tersedia, situs dan APK tetap memuat aplikasi lama. Setelah migrasi, buka ulang aplikasi agar UI multi-role aktif. Data lama disalin ke tabel baru dan API dokumen bersama ditutup. Detail pemetaan status dan batas migrasi ada di `docs/WORKFLOW.md`.
 
-Publishable key pada `dist/config.js` adalah konfigurasi browser publik. Password, secret/service_role key, token admin dan keystore tidak boleh dimasukkan ke repositori. Pembuatan akun/password tetap dilakukan melalui Supabase Authentication; Admin aplikasi kemudian memberikan role untuk akun yang sudah terdaftar.
+Publishable key pada `dist/config.js` adalah konfigurasi browser publik. Password, secret/service_role key, token admin dan keystore tidak boleh dimasukkan ke repositori. Pengguna dapat mendaftar dari halaman login, dan Admin dapat membuat akun langsung melalui User → Buat Akun Baru. Supabase Auth menangani password dan konfirmasi email; peran tetap diberikan Admin. Lihat [panduan pendaftaran](docs/REGISTRATION.md).
 
 ## Pengembangan dan pengujian
 
