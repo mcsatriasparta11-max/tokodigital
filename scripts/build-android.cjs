@@ -1,0 +1,13 @@
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),{spawnSync}=require('node:child_process');
+const root=path.resolve(__dirname,'..');
+const sdk=process.env.ANDROID_HOME||process.env.ANDROID_SDK_ROOT||path.join(os.homedir(),'AppData','Local','Android','Sdk');
+if(!fs.existsSync(path.join(sdk,'platforms','android-36')))throw Error('Android SDK Platform 36 is required.');
+const settings=spawnSync('java',['-XshowSettings:properties','-version'],{encoding:'utf8'});
+const discovered=(settings.stderr||'').match(/java\.home\s*=\s*(.+)/)?.[1]?.trim();
+const java=process.env.JAVA_HOME||discovered||'C:/Program Files/Android/Android Studio/jbr';
+if(!fs.existsSync(path.join(java,'bin',process.platform==='win32'?'java.exe':'java')))throw Error('Set JAVA_HOME to JDK 21 or newer.');
+fs.writeFileSync(path.join(root,'android','local.properties'),'sdk.dir='+sdk.replaceAll('\\','/')+'\n');
+const env={...process.env,JAVA_HOME:java,ANDROID_HOME:sdk,GRADLE_USER_HOME:path.join(root,'.gradle-cache')};
+const result=process.platform==='win32'?spawnSync('cmd.exe',['/d','/s','/c','gradlew.bat --no-daemon assembleDebug'],{cwd:path.join(root,'android'),env,stdio:'inherit'}):spawnSync('./gradlew',['--no-daemon','assembleDebug'],{cwd:path.join(root,'android'),env,stdio:'inherit'});
+if(result.error)throw result.error;if(result.status!==0)process.exit(result.status||1);
+fs.mkdirSync(path.join(root,'outputs'),{recursive:true});const target=path.join(root,'outputs','Kedai-UPU-PO-v3-debug.apk');fs.copyFileSync(path.join(root,'android','app','build','outputs','apk','debug','app-debug.apk'),target);console.log('APK: '+target);

@@ -1,0 +1,427 @@
+Blueprint — Aplikasi Purchase Order Kedai UPU
+1. Tujuan aplikasi
+Aplikasi digunakan untuk menghubungkan:
+
+Purchasing Kedai UPU ↔ Sales Supplier
+
+Tujuan utamanya:
+- Purchasing membuat dan menerbitkan PO.
+- PO otomatis masuk ke Sales Supplier yang menangani supplier tersebut.
+- Sales Supplier mengonfirmasi PO.
+- Sales Supplier memberikan estimasi tanggal pengantaran.
+- Purchasing dapat memantau status dan progres PO.
+- Semua aktivitas PO memiliki riwayat.
+2. Role pengguna
+A. Purchasing
+Pihak internal Kedai UPU yang membuat PO.
+
+Hak akses:
+- Melihat PO
+- Membuat PO
+- Menerbitkan PO
+- Melihat konfirmasi Sales
+- Melihat estimasi pengantaran
+- Melihat progres PO
+- Melihat riwayat PO
+B. Sales Supplier
+Sales dari pihak supplier.
+
+Setiap Sales hanya melihat PO dari supplier yang menjadi tanggung jawabnya.
+
+Hak akses:
+- Melihat PO masuk
+- Membuka detail PO
+- Mengonfirmasi PO
+- Menginput estimasi pengantaran
+- Melihat PO yang pernah dikonfirmasi
+- Memperbarui informasi pengiriman jika diperlukan
+C. Admin
+Untuk pengelolaan sistem.
+
+Hak akses nantinya:
+- Kelola user
+- Kelola supplier
+- Hubungkan supplier dengan Sales
+- Kelola data dasar aplikasi
+3. Alur utama PO
+Ini bagian paling penting.
+PURCHASING
+    │
+    │ Membuat PO
+    ▼
+DRAFT
+    │
+    │ Terbitkan PO
+    ▼
+PO DITERBITKAN
+    │
+    │ Sistem otomatis mengirim ke
+    │ Sales Supplier terkait
+    ▼
+MENUNGGU KONFIRMASI
+    │
+    │ Sales membuka PO
+    ▼
+SALES KONFIRMASI PO
+    │
+    │ Sales input estimasi pengantaran
+    ▼
+DIKONFIRMASI
+    │
+    │ Menunggu pengiriman
+    ▼
+MENUNGGU PENGIRIMAN
+    │
+    ▼
+DIKIRIM
+    │
+    ▼
+DITERIMA
+    │
+    ▼
+SELESAI
+
+4. Pembuatan PO — Purchasing
+Purchasing membuat PO dengan data:
+Informasi PO
+- Nomor PO
+- Supplier
+- Tanggal PO
+- Catatan
+Detail barang
+Barang	Qty	Satuan
+Tepung 25 KG	20	Zak
+Gula 1 KG	50	Pcs
+Margarin	30	Pcs
+
+
+Kemudian:
+
+Simpan Draft
+
+atau
+
+Terbitkan PO
+5. Ketika PO diterbitkan
+Misalnya Purchasing membuat:
+PO-20260821-001
+Supplier: PT ABC
+
+Begitu tombol Terbitkan PO ditekan:
+
+Sistem mencari:
+PT ABC → Sales: Budi
+
+Kemudian PO otomatis masuk ke dashboard Budi.
+
+Purchasing tidak perlu mengirim PO secara manual melalui WhatsApp hanya agar Sales mengetahuinya.
+6. Dashboard Sales
+Sales melihat:
+PO Baru
+ PO Baru
+
+PO-20260821-001
+PT Kedai UPU
+21 Agustus 2026
+12 item  
+
+[Lihat PO]
+
+Sales membuka PO.
+7. Detail PO di sisi Sales
+Sales dapat melihat seluruh isi PO:
+
+PO-20260821-001
+
+Supplier:
+PT ABC
+
+Tanggal:
+21 Agustus 2026
+
+Barang:
+Barang	Qty
+Tepung 25 KG	20
+Gula 1 KG	50
+Margarin	30
+
+
+Di bagian bawah terdapat:
+Konfirmasi PO
+[ KONFIRMASI PO ]
+
+Setelah ditekan, Sales mengisi:
+Estimasi Pengantaran
+ 25 Agustus 2026
+
+Catatan:
+Barang tepung dikirim terlebih dahulu.
+
+Kemudian:
+
+[ KONFIRMASI ]
+8. Setelah Sales mengonfirmasi
+Purchasing langsung melihat perubahan:
+PO-20260821-001
+
+ Dikonfirmasi Supplier
+
+Dikonfirmasi oleh: Budi
+
+Estimasi pengantaran:
+25 Agustus 2026
+
+Jadi Purchasing tidak perlu bertanya:
+"PO saya sudah diterima belum?"
+
+atau:
+"Kapan barang dikirim?"
+
+Informasinya sudah ada di aplikasi.
+9. Status PO
+Untuk V1 kita gunakan status yang sederhana:
+Status	Arti
+Draft	PO belum diterbitkan
+Menunggu Konfirmasi	PO sudah diterbitkan, Sales belum merespons
+Dikonfirmasi	Sales sudah menerima PO dan memberikan estimasi
+Menunggu Pengiriman	PO sudah dikonfirmasi dan menunggu barang dikirim
+Dikirim	Barang sudah dikirim supplier
+Diterima	Barang sudah diterima
+Selesai	Proses PO selesai
+
+
+Status tertentu nantinya bisa otomatis berubah berdasarkan tindakan user.
+10. Timeline PO
+Setiap PO mempunyai riwayat.
+
+Contoh:
+21 Agustus 09:15
+PO dibuat oleh Purchasing
+
+21 Agustus 09:20
+PO diterbitkan
+
+21 Agustus 10:05
+PO dilihat oleh Sales Budi
+
+21 Agustus 10:10
+PO dikonfirmasi oleh Budi
+
+Estimasi pengantaran:
+25 Agustus 2026
+
+Ini penting untuk mengetahui siapa melakukan apa dan kapan.
+11. Dashboard Purchasing
+Dashboard utama Purchasing:
+Ringkasan
+┌─────────────────┐
+│ PO AKTIF   24   │
+├─────────────────┤
+│ MENUNGGU KONF. 7│
+├─────────────────┤
+│ DIKONFIRMASI 12 │
+├─────────────────┤
+│ DIKIRIM      5  │
+├─────────────────┤
+│ TERLAMBAT    3  │
+└─────────────────┘
+
+Kemudian daftar PO:
+PO	Supplier	Status	Estimasi
+PO-001	ABC	Dikonfirmasi	25 Agu
+PO-002	XYZ	Menunggu Konfirmasi	-
+PO-003	DEF	Dikirim	22 Agu
+
+
+12. Dashboard Sales
+Sales hanya melihat PO supplier yang menjadi tanggung jawabnya.
+
+Contoh:
+PO BARU              4
+
+MENUNGGU PENGIRIMAN  8
+
+DIKIRIM              3
+
+SELESAI              27
+
+Jadi Sales tidak melihat PO supplier lain.
+13. Master Supplier
+Admin memiliki data:
+Supplier	Sales	Status
+PT ABC	Budi	Aktif
+PT XYZ	Andi	Aktif
+PT DEF	Rudi	Aktif
+
+
+Hubungan Supplier → Sales ini sangat penting, karena menentukan siapa yang menerima PO.
+
+Misalnya:
+PT ABC
+   ↓
+Sales Budi
+   ↓
+PO PT ABC masuk ke akun Budi
+
+14. Notifikasi
+Untuk V1, notifikasi dasar:
+Sales
+Ketika Purchasing menerbitkan PO:
+ PO Baru
+
+PO-20260821-001 dari Kedai UPU menunggu konfirmasi.
+
+Purchasing
+Ketika Sales mengonfirmasi:
+ PO Dikonfirmasi
+
+PO-20260821-001 telah dikonfirmasi oleh Budi.
+
+Estimasi pengantaran: 25 Agustus 2026
+
+Nanti metode notifikasi bisa kita tentukan setelah fondasi aplikasinya selesai.
+15. Database inti
+Secara konsep kita membutuhkan:
+USERS
+│
+├── Purchasing
+├── Sales
+└── Admin
+
+SUPPLIERS
+│
+└── Sales
+
+PURCHASE_ORDERS
+│
+├── PO Header
+├── Supplier
+├── Purchasing
+├── Status
+├── Tanggal
+└── Estimasi Pengantaran
+
+PO_ITEMS
+│
+├── PO
+├── Barang
+├── Qty
+└── Satuan
+
+PO_TIMELINE
+│
+├── PO
+├── User
+├── Aktivitas
+└── Waktu
+
+16. Halaman aplikasi V1
+Purchasing
+1. Dashboard
+2. Daftar PO
+3. Buat PO
+4. Detail PO
+5. Riwayat PO
+Sales
+1. Dashboard
+2. PO Baru
+3. Daftar PO
+4. Detail PO
+5. Riwayat
+Admin
+1. Dashboard
+2. User
+3. Supplier
+4. Mapping Supplier → Sales
+17. Contoh penggunaan dari awal sampai akhir
+Misalnya tanggal 21 Agustus.
+
+09:00 — Purchasing
+
+Membuat PO:
+PO-001
+Supplier: PT ABC
+10 jenis barang
+100 total qty
+
+Klik:
+
+TERBITKAN PO
+09:01 — Sistem
+
+Mengetahui bahwa:
+PT ABC → Sales Budi
+
+Maka PO otomatis muncul di akun Budi.
+09:15 — Sales Budi
+
+Membuka PO.
+
+Klik:
+
+KONFIRMASI PO
+
+Mengisi:
+Estimasi pengantaran: 23 Agustus
+
+Klik:
+
+KONFIRMASI
+09:16 — Purchasing
+
+Membuka dashboard.
+
+Langsung terlihat:
+PO-001
+Dikonfirmasi 
+Estimasi tiba: 23 Agustus
+Sales: Budi
+
+23 Agustus
+
+Supplier mengirim barang.
+
+Sales dapat memperbarui:
+Dikirim
+
+Ketika barang sudah diterima:
+Diterima
+
+Dan PO akhirnya:
+Selesai
+
+Blueprint inti yang kita sepakati
+             KEDAI UPU
+                 │
+          ┌──────▼──────┐
+          │  PURCHASING  │
+          └──────┬──────┘
+                 │
+            TERBITKAN PO
+                 │
+                 ▼
+          ┌──────────────┐
+          │    SISTEM    │
+          └──────┬───────┘
+                 │
+       Cari Sales berdasarkan
+             Supplier
+                 │
+                 ▼
+          ┌──────────────┐
+          │ SALES SUPPLIER│
+          └──────┬───────┘
+                 │
+          KONFIRMASI PO
+                 │
+                 ▼
+       INPUT ESTIMASI ANTAR
+                 │
+                 ▼
+          ┌──────────────┐
+          │   PURCHASING │
+          │ melihat       │
+          │ progres PO    │
+          └──────────────┘
+
+Ini menurut saya sudah cukup sebagai blueprint V1. Setelah ini kita bisa masuk ke tahap berikutnya: menentukan teknologi dan struktur project aplikasinya, lalu baru mulai membuatnya satu per satu.

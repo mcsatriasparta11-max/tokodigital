@@ -1,40 +1,38 @@
 # Kedai UPU PO
 
-Aplikasi purchasing responsif untuk desktop dan HP. Situs: https://mcsatriasparta11-max.github.io/tokodigital/
+Aplikasi Purchasing ↔ Sales Supplier untuk web dan Android, dengan login Supabase dan database PostgreSQL.
 
-## Penyimpanan
+Situs: https://mcsatriasparta11-max.github.io/tokodigital/
 
-- Tanpa konfigurasi Supabase, aplikasi tetap menggunakan data browser lama (`upu-po-v1`).
-- Setelah Supabase dikonfigurasi, aplikasi meminta login email/kata sandi. Data bersama disimpan di PostgreSQL, bukan di localStorage. Sesi login tetap disimpan oleh SDK di browser.
-- Hanya pengguna yang didaftarkan sebagai anggota workspace dapat membaca/menyimpan data. Pendaftaran akun baru tidak otomatis memberikan akses.
-- Perubahan mencakup supplier, produk, PO, aktivitas, impor Excel, dan pemulihan cadangan. Server memvalidasi data dan menyimpan satu transaksi per tindakan. Versi data mencegah penimpaan perubahan perangkat lain.
-- Data diperiksa setiap 15 detik ketika aplikasi terbuka. Ini polling, bukan pembaruan langsung per detik. Koneksi internet diperlukan untuk menyimpan ke database.
+## Alur sesuai blueprint
 
-## Aktivasi Supabase
+Draft → Menunggu Konfirmasi → Dikonfirmasi → Menunggu Pengiriman → Dikirim → Diterima → Selesai.
 
-Ikuti [panduan penyiapan](supabase/SETUP.md). Belum ada proyek atau kredensial Supabase yang disertakan di repositori.
+Purchasing membuat dan menerbitkan PO. PO masuk ke Sales sesuai mapping supplier. Sales mengonfirmasi dan wajib mengisi estimasi pengantaran, lalu memperbarui pengiriman. Purchasing mencatat penerimaan dan penyelesaian. Admin mengelola user, supplier, produk, dan mapping. Sales tidak dapat melihat Draft atau PO supplier lain; pembatasan berlaku di server melalui RLS.
 
-File penting:
+Tersedia timeline per PO, dashboard sesuai role, notifikasi di dalam aplikasi, impor Draft per supplier, serta ekspor CSV/data. Notifikasi belum berupa push, email, atau WhatsApp.
 
-- `supabase/migrations/202610260001_purchasing.sql`: tabel, validasi, akses anggota, RLS, dan RPC penyimpanan.
-- `supabase/add-member.sql`: mendaftarkan pengguna yang diizinkan ke workspace.
-- `dist/config.js`: URL proyek dan publishable/anon key (konfigurasi publik, bukan secret).
-- `dist/cloud.js`: login, sinkronisasi, transaksi, migrasi lokal, dan penanganan konflik.
-- `dist/data.js`: validasi data sebelum ditampilkan atau diunggah.
+Lihat [alur, teknologi dan struktur proyek](docs/WORKFLOW.md), [blueprint pengguna](docs/BLUEPRINT.txt), serta [panduan Android](docs/ANDROID.md).
 
-## Menjalankan dan menguji
+## Aktivasi database
 
-Tidak memerlukan build. Sajikan folder `dist` melalui server HTTP. Library Excel dan font masih memerlukan internet; SDK Supabase 2.118.0 disertakan lokal beserta lisensi MIT di `dist/vendor/`.
+Versi baru membutuhkan migrasi `supabase/migrations/202610260002_workflow.sql` setelah migrasi pertama, lalu bootstrap Admin pertama. Skrip lokal gabungan `.openai/activate-blueprint.sql` disiapkan untuk email pengelola proyek ini: jalankan satu kali di Supabase SQL Editor, sebagai pengganti migrasi kedua dan bootstrap terpisah.
 
-Gunakan Node.js 22 atau lebih baru:
+Sebelum migrasi kedua tersedia, situs dan APK tetap memuat aplikasi lama. Setelah migrasi, buka ulang aplikasi agar UI multi-role aktif. Data lama disalin ke tabel baru dan API dokumen bersama ditutup. Detail pemetaan status dan batas migrasi ada di `docs/WORKFLOW.md`.
+
+Publishable key pada `dist/config.js` adalah konfigurasi browser publik. Password, secret/service_role key, token admin dan keystore tidak boleh dimasukkan ke repositori. Pembuatan akun/password tetap dilakukan melalui Supabase Authentication; Admin aplikasi kemudian memberikan role untuk akun yang sudah terdaftar.
+
+## Pengembangan dan pengujian
+
+Node.js 22+, JDK 21 untuk Android, Android SDK Platform 36.
 
 ```sh
 npm ci
 npm test
+npm run test:browser
+npm run android:apk
 ```
 
-Di PowerShell dengan pembatasan skrip, gunakan `npm.cmd ci` dan `npm.cmd test`.
+Pada PowerShell dengan pembatasan skrip gunakan `npm.cmd`. Pengujian browser memakai Microsoft Edge lokal; untuk lingkungan lain tentukan `BROWSER_EXECUTABLE` ke Chromium yang tersedia. Pengujian database memakai PGlite, sedangkan skenario browser memakai API mock dan tidak mengubah data produksi.
 
-Pengujian mencakup halaman aplikasi, login, perubahan PO, cadangan, impor, jaringan terputus, konflik, serta migrasi dan aturan akses PostgreSQL melalui PGlite. GitHub Actions menjalankan pengujian sebelum memublikasikan `dist` ke Pages.
-
-Format impor: `supplier,kode_produk,nama_produk,qty`. Kode produk harus unik, berisi huruf/angka/minus/garis bawah; qty harus bilangan bulat 1–10.000.000. File maksimal 5 MB / 10.000 baris.
+Tidak memerlukan build web. `npm run build:native` menghasilkan adapter Capacitor `dist/native.js`. `npm run android:sync` menyalin `dist` ke proyek Android. SDK Supabase disertakan lokal; library Excel dan font masih membutuhkan internet. Penyimpanan bersama dan login memerlukan koneksi internet.

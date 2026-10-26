@@ -1,7 +1,26 @@
 {
   "name": "kedai-upu-po",
   "private": true,
-  "version": "2.0.0",
-  "scripts": { "test": "node check.cjs && node --test tests/*.test.cjs" },
-  "devDependencies": { "@electric-sql/pglite": "0.5.11" }
+  "version": "3.0.0",
+  "scripts": {
+    "test": "node check.cjs && node --test tests/*.test.cjs",
+    "build:native": "esbuild src/native.js --bundle --format=iife --target=es2020 --outfile=dist/native.js",
+    "android:sync": "npm run build:native && cap sync android",
+    "android:open": "cap open android",
+    "android:apk": "npm run android:sync && node scripts/build-android.cjs",
+    "test:browser": "node tests/workflow-browser.cjs"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3",
+    "@electric-sql/pglite": "0.5.11",
+    "@playwright/test": "1.64.1",
+    "esbuild": "0.28.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3"
+  }
 }

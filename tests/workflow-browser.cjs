@@ -1,0 +1,36 @@
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+const {chromium}=require('playwright');
+const root=path.resolve('dist'),OID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',UID='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',email:'user@test.local',role,active:true},users:[{user_id:UID,name:'Budi',email:'user@test.local',role:'sales',active:true}],suppliers:[{id:'SUP1',name:'PT ABC',sales_id:UID,active:true}],products:[],orders:[{id:OID,number:'PO-20261026-001',supplier_id:'SUP1',order_date:'2026-10-26',note:'Kirim pagi',status:'AwaitingConfirmation',eta:null,sales_note:'',version:1,created_at:'2026-10-26T01:00:00Z'}],items:[{order_id:OID,name:'Tepung 25 KG',qty:20,unit:'Zak'}],timeline:[{id:'t1',order_id:OID,event:'published',actor_name:'Purchasing',detail:'PO diterbitkan',created_at:'2026-10-26T01:00:00Z'}],notifications:[]});
+(async()=>{
+ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://test').pathname==='/'?'/index.html':new URL(req.url,'http://test').pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return}fs.readFile(file,(err,data)=>{res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html');res.writeHead(err?404:200);res.end(err?'Missing':data)})});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const browser=await chromium.launch({executablePath:process.env.BROWSER_EXECUTABLE||'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
+ let checks=0;
+ async function scenario(role,fn){const context=await browser.newContext({viewport:{width:390,height:844}});const errors=[];const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+  await page.addInitScript(data=>{window.testData=data;window.calls=[];window.setInterval=fn=>{window.testPoll=fn;return 1};window.confirm=()=>true},fixture(role));
+  await context.route('**/vendor/supabase.js',route=>route.fulfill({contentType:'text/javascript',body:`window.supabase={createClient(){return {auth:{async getSession(){return {data:{session:{user:{id:'${UID}'}}}}},onAuthStateChange(fn){window.authEvent=fn},async signOut(){window.authEvent('SIGNED_OUT',null);return {}}},async rpc(name,args){if(name==='po_dashboard')return {data:structuredClone(window.testData)};window.calls.push(args);if(window.failWrite)return {error:{code:'40001',message:'conflict'}};const o=window.testData.orders.find(o=>o.id===args.payload.id);if(args.action==='confirm'){o.status='Confirmed';o.eta=args.payload.eta;o.confirmed_name='Budi';o.sales_note=args.payload.note;o.version++;window.testData.timeline.push({id:'t2',order_id:o.id,event:'confirmed',actor_name:'Budi',detail:'PO dikonfirmasi',created_at:'2026-10-26T02:00:00Z'})}if(args.action==='draft'){window.testData.orders.unshift({id:'new-order',number:'PO-NEW',...args.payload,status:args.payload.publish?'AwaitingConfirmation':'Draft',version:0,created_at:'2026-10-26T03:00:00Z'});for(const i of args.payload.items)window.testData.items.push({...i,order_id:'new-order'});return {data:{id:'new-order'}}}return {data:{id:args.payload.id}}}}}};` }));
+  await context.route('https://wqibajjwapkieefkhilx.supabase.co/**',route=>route.fulfill({status:401,contentType:'application/json',body:JSON.stringify({code:'42501'})}));
+  await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.PO&&PO.state.data?.me);
+  try{await fn(page);assert.deepEqual(errors,[]);checks++;console.log('PASS browser:',role,checks)}finally{await context.close()}
+ }
+ try{
+ await scenario('sales',async page=>{
+  assert.equal(await page.locator('#sidebar').getByText('Buat PO',{exact:true}).count(),0);assert.equal(await page.locator('#sidebar').getByText('User',{exact:true}).count(),0);
+  await page.evaluate(id=>PO.open(id),OID);await page.getByRole('button',{name:'Konfirmasi PO',exact:true}).click();await page.locator('#eta').fill('2026-10-28');await page.locator('#action-note').fill('Tepung dikirim terlebih dahulu');await page.locator('#modal').getByRole('button',{name:'Konfirmasi PO',exact:true}).click();
+  await page.waitForFunction(()=>PO.state.data.orders[0].status==='Confirmed');assert.match(await page.locator('#main').innerText(),/Budi/);assert.match(await page.locator('#main').innerText(),/28 Okt 2026/i);assert.equal(await page.getByRole('button',{name:'Catat Penerimaan',exact:true}).count(),0);
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:'outputs/workflow-sales-mobile.png',fullPage:true});
+ });
+ await scenario('purchasing',async page=>{
+  await page.evaluate(()=>PO.go('create'));await page.locator('.item-name').fill('Gula 1 KG');await page.locator('.item-qty').fill('50');await page.locator('.item-unit').fill('Pcs');await page.getByRole('button',{name:'Simpan Draft',exact:true}).click();await page.waitForFunction(()=>PO.state.page==='detail');assert.match(await page.locator('#main').innerText(),/PO-NEW/);const request=await page.evaluate(()=>window.calls.find(c=>c.action==='draft'));assert.equal(request.payload.items[0].qty,50);assert.equal(request.payload.publish,false);assert(request.payload.request_id);
+ });
+ await scenario('sales',async page=>{
+  await page.evaluate(id=>PO.open(id),OID);await page.getByRole('button',{name:'Konfirmasi PO',exact:true}).click();await page.locator('#eta').fill('2026-10-29');await page.evaluate(()=>window.failWrite=true);await page.locator('#modal').getByRole('button',{name:'Konfirmasi PO',exact:true}).click();await page.waitForFunction(()=>!PO.state.busy);assert.equal(await page.locator('#eta').inputValue(),'2026-10-29');assert(await page.locator('#modal').evaluate(n=>n.open));assert.equal(await page.evaluate(()=>PO.state.data.orders[0].status),'AwaitingConfirmation');
+ });
+ await scenario('admin',async page=>{
+  await page.evaluate(()=>PO.go('suppliers'));await page.getByRole('button',{name:'Edit Mapping',exact:true}).click();assert.equal(await page.locator('#modal select[name=sales_id]').inputValue(),UID);assert.match(await page.locator('#modal').innerText(),/Budi/);await page.evaluate(()=>PO.close());await page.evaluate(()=>PO.go('users'));assert.match(await page.locator('#main').innerText(),/Daftarkan User/);
+ });
+ await scenario('sales',async page=>{await page.evaluate(()=>PO.go('users'));await page.waitForFunction(()=>PO.state.page==='dashboard');assert.equal(await page.getByRole('button',{name:'Daftarkan User',exact:true}).count(),0);await page.evaluate(()=>PO.logout());await page.getByRole('button',{name:'Masuk',exact:true}).waitFor();assert.equal(await page.evaluate(()=>PO.state.data),null)});
+ console.log('PASS:',checks,'real browser scenarios');
+ }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
+})().catch(e=>{console.error(e);process.exitCode=1});
