@@ -236,6 +236,39 @@
  window.PO={state:S,openMenu,closeMenu,enablePush,supplierTemplate,readSupplierImport,commitSupplierImport,registrationForm,register,reviewRegistration,showLogin:loginScreen,go,open,close,action,submitAction,saveDraft,addItem,pickProduct,updateConversion,productTemplate,readPOImport,commitPOImport,supplierChanged,userForm,saveUser,supplierForm,saveSupplier,productForm,saveProduct,readNotification,backup,exportOrders,exportImage,login,logout,readImport,commitImport,
   refresh:(background=false)=>load(background),search:value=>{S.query=value;$('#po-list').innerHTML=table(filtered())},filter:value=>{S.filter=value;orderPage()}};
  window.navigate=page=>go(page==='activity'?'notifications':page==='profile'?'account':page==='home'?'dashboard':page);
+
+ // Navigate mobile bottom tabs without stealing form editing or horizontal table scrolling.
+ function installTabSwipes(){
+  const main=document.querySelector('#main');let gesture=null,suppressClickUntil=0;
+  const tabs=()=>['dashboard','orders',internal()?'create':'new','notifications'];
+  const blocked=()=>!S.data?.me||S.busy||S.loading||openingDepth>0||document.querySelector('dialog[open]')||!window.matchMedia('(max-width:700px)').matches;
+  main.addEventListener('touchstart',event=>{
+   gesture=null;if(event.touches.length!==1||blocked()||!tabs().includes(S.page))return;
+   const target=event.target;if(target.closest('input,textarea,select,a,[contenteditable="true"],[role="slider"]'))return;
+   const button=target.closest('button');if(button&&!button.matches('.po-card,.notification-row'))return;
+   for(let node=target;node&&node!==main;node=node.parentElement){if(node.scrollWidth>node.clientWidth+2&&/auto|scroll/.test(getComputedStyle(node).overflowX))return}
+   const touch=event.touches[0];gesture={x:touch.clientX,y:touch.clientY,id:touch.identifier,page:S.page,epoch:S.epoch,time:Date.now(),horizontal:false};
+  },{passive:true});
+  main.addEventListener('touchmove',event=>{
+   if(!gesture)return;if(event.touches.length!==1){gesture=null;return}
+   const touch=event.touches[0];if(touch.identifier!==gesture.id){gesture=null;return}
+   const dx=Math.abs(touch.clientX-gesture.x),dy=Math.abs(touch.clientY-gesture.y);
+   if(!gesture.horizontal&&dy>12&&dy>=dx){gesture=null;return}
+   if(dx>16&&dx>dy*1.5)gesture.horizontal=true;
+   if(gesture.horizontal&&event.cancelable)event.preventDefault();
+  },{passive:false});
+  main.addEventListener('touchcancel',()=>{gesture=null},{passive:true});
+  main.addEventListener('touchend',event=>{
+   const start=gesture;gesture=null;if(!start||blocked()||start.page!==S.page||start.epoch!==S.epoch||event.touches.length)return;
+   const touch=[...event.changedTouches].find(t=>t.identifier===start.id);if(!touch)return;
+   const dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+   if(Math.abs(dx)<72||Math.abs(dx)<=Math.abs(dy)*1.5||Date.now()-start.time>900)return;
+   suppressClickUntil=Date.now()+350;const list=tabs(),index=list.indexOf(S.page);
+   if(dx>0&&index===0)openMenu();else{const next=index+(dx<0?1:-1);if(next>=0&&next<list.length)go(list[next])}
+  },{passive:true});
+  main.addEventListener('click',event=>{if(Date.now()<suppressClickUntil){event.preventDefault();event.stopPropagation()}},true);
+ }
+ installTabSwipes();
  window.addEventListener('beforeunload',event=>{if(S.busy||S.page==='create'||$('#modal').open){event.preventDefault();event.returnValue=''}});
  window.addEventListener('online',()=>load(true));window.addEventListener('focus',()=>load(true));
  client.auth.onAuthStateChange((event,session)=>{const changed=S.session?.user.id!==session?.user.id;S.session=session;if(event==='SIGNED_OUT'||changed){S.epoch++;S.data=null;S.requests=[];S.requestsError='';S.page='dashboard';if($('#modal').open)$('#modal').close()}if(event==='SIGNED_OUT'){live?.stop();live=null;liveUser=null;liveDirty=false;render()}else if(event==='SIGNED_IN'&&changed)setTimeout(()=>load(),0)});
