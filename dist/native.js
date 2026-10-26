@@ -1427,10 +1427,12 @@
     window.NativeStartup = installStartup();
     document.documentElement.classList.remove("boot-pending");
     installPush();
-    window.NativeFiles = { async save(name, content, type) {
+    window.NativeFiles = { async saveImage(name, dataUrl) {
+      return this.save(name, dataUrl.split(",")[1], "image/png");
+    }, async save(name, content, type) {
       try {
         const path = "exports/" + Date.now() + "-" + name.replace(/[^A-Za-z0-9._-]/g, "_");
-        await Filesystem.writeFile({ path, data: content, directory: Directory.Cache, encoding: Encoding.UTF8, recursive: true });
+        await Filesystem.writeFile({ path, data: content, directory: Directory.Cache, ...type === "image/png" ? {} : { encoding: Encoding.UTF8 }, recursive: true });
         const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache });
         await Share.share({ title: name, files: [uri], dialogTitle: "Simpan atau bagikan berkas Kedai UPU" });
       } catch (error) {

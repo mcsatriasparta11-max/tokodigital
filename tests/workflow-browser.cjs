@@ -90,6 +90,19 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
   await page.evaluate(()=>{window.delayWrite=true;PO.go('orders')});await page.locator('.po-card:visible').click();await page.locator('#route-loading').waitFor({state:'visible'});assert.equal(await page.locator('#main').getAttribute('aria-busy'),'true');await page.evaluate(()=>window.releaseWrite());await page.waitForFunction(()=>PO.state.page==='detail'&&!PO.state.busy);await page.locator('#route-loading').waitFor({state:'hidden'});
   await page.evaluate(id=>{PO.state.data.notifications=[{id:'n-loading',order_id:id,title:'PO Baru',body:'Uji koneksi lambat'}];PO.go('notifications');window.delayWrite=true;window.failWrite=true},OID);await page.getByRole('button',{name:/Uji koneksi lambat/}).click();await page.locator('#route-loading').waitFor({state:'visible'});await page.evaluate(()=>window.releaseWrite());await page.locator('#route-loading').waitFor({state:'hidden'});assert.equal(await page.locator('#main').getAttribute('aria-busy'),null);
  });
+ await scenario('sales',async page=>{
+  await page.setViewportSize({width:320,height:740});await page.evaluate(id=>PO.open(id),OID);
+  assert(await page.locator('.po-items-table').evaluate(t=>t.scrollWidth<=t.parentElement.clientWidth+1));
+  await page.evaluate(()=>{window.imageExports=[];window.drawnText=[];const original=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(text,...args){window.drawnText.push(String(text));return original.call(this,text,...args)};window.NativeFiles={async saveImage(name,dataUrl){window.imageExports.push({name,dataUrl})}}});
+  await page.getByRole('button',{name:'Unduh Gambar',exact:true}).click();await page.waitForFunction(()=>window.imageExports.length===1);
+  const result=await page.evaluate(()=>({name:window.imageExports[0].name,prefix:window.imageExports[0].dataUrl.slice(0,30),locked:window.drawnText.includes('Terkunci'),qty:window.drawnText.includes('20')}));assert(result.name.endsWith('.png'));assert(result.prefix.startsWith('data:image/png;base64,'));assert(result.locked);assert(!result.qty);
+  await page.evaluate(()=>{window.drawnText=[];const o=PO.state.data.orders[0];o.status='Confirmed';o.eta='2026-10-29'});await page.evaluate(id=>PO.exportImage(id),OID);assert(await page.evaluate(()=>window.drawnText.includes('20')));await page.evaluate(()=>window.NativeFiles=null);const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:'Unduh Gambar',exact:true}).click();const download=await downloaded;await download.saveAs('outputs/po-image-preview.png');const png=fs.readFileSync('outputs/po-image-preview.png');assert.equal(png.subarray(1,4).toString(),'PNG');assert.equal(png.readUInt32BE(16),1064);
+ });
+ await scenario('purchasing',async page=>{
+  await page.setViewportSize({width:320,height:740});await page.evaluate(()=>{PO.state.data.products=[{id:'000123456789012345',name:'Nama produk yang panjang untuk pengujian tabel layar kecil',supplier_id:'SUP1',unit:'CRT',pack_units:['CRT','PACK','PCS'],pack_factors:[120,12,1]}];PO.go('products')});
+  assert(await page.locator('.master-table').evaluate(t=>t.scrollWidth<=t.parentElement.clientWidth+1));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.equal(await page.locator('.product-master th').nth(5).evaluate(n=>getComputedStyle(n).display),'none');await page.screenshot({path:'outputs/master-fit-mobile.png',fullPage:true});
+  await page.evaluate(()=>PO.go('suppliers'));assert(await page.locator('.master-table').evaluate(t=>t.scrollWidth<=t.parentElement.clientWidth+1));
+ });
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});

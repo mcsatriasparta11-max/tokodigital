@@ -28,3 +28,14 @@ h1,h2,h3,.logo b,.stat strong{font-family:inherit}button,input,select,textarea{-
 #route-loading[hidden]{display:none!important}#route-loading{position:fixed;inset:0;z-index:900;display:grid;place-items:center;background:#ffffffb8;backdrop-filter:blur(2px);touch-action:none}.route-loading-card{display:flex;align-items:center;flex-direction:column;gap:14px;padding:26px 34px;border-radius:20px;background:#fff;box-shadow:0 8px 40px #0002;color:#55433e;font-size:14px;font-weight:600}
 
 .table-wrap:has(.excel-table){overflow-x:auto}.excel-table{border-collapse:collapse;width:100%;white-space:nowrap}.excel-table th,.excel-table td{border:1px solid #d8dee8;padding:8px 10px!important;line-height:1.35;font-size:12px!important;vertical-align:middle}.excel-table th{background:#f1f4f8;color:#334155;font-weight:700}.excel-table tbody tr:nth-child(even){background:#f8fafc}.excel-table .numeric{text-align:right;font-variant-numeric:tabular-nums}.excel-table .btn{min-height:36px;padding:6px 10px;font-size:12px}.excel-table .po-item-code{font-size:12px;color:inherit}.qty-notice{margin:14px 0;padding:12px 14px;border:1px solid #f3cd78;border-radius:8px;background:#fffbeb;color:#854d0e;font-size:13px;line-height:1.6}
+
+@media(max-width:700px){
+ .table-wrap:has(.excel-table){width:100%;max-width:100%;overflow-x:visible}
+ .excel-table{table-layout:fixed;width:100%;min-width:0;white-space:normal}
+ .excel-table th,.excel-table td{white-space:normal;overflow-wrap:anywhere;word-break:normal;padding:7px 4px!important;font-size:10px!important;line-height:1.4}
+ .excel-table .po-item-code{font-size:10px}.excel-table .btn{width:100%;min-height:40px;padding:4px 2px;font-size:10px;white-space:normal;overflow-wrap:anywhere}
+ .po-items-table th:nth-child(1){width:15%}.po-items-table th:nth-child(2){width:32%}.po-items-table th:nth-child(3){width:14%}.po-items-table th:nth-child(4){width:12%}.po-items-table th:nth-child(5){width:27%}
+ .product-master th:nth-child(6),.product-master td:nth-child(6){display:none}
+ .product-master th:nth-child(2){width:25%}.product-master th:last-child{width:13%}
+ .supplier-master th:nth-child(1){width:15%}.supplier-master th:nth-child(2){width:28%}.supplier-master th:nth-child(3){width:25%}.supplier-master th:nth-child(4){width:14%}.supplier-master th:nth-child(5){width:18%}
+}
