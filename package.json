@@ -1,7 +1,7 @@
 {
   "name": "kedai-upu-po",
   "private": true,
-  "version": "3.3.7",
+  "version": "3.3.8",
   "scripts": {
     "test": "node check.cjs && node --test tests/*.test.cjs",
     "build:native": "esbuild src/native.js --bundle --format=iife --target=es2020 --outfile=dist/native.js",
@@ -9,7 +9,8 @@
     "android:open": "cap open android",
     "android:apk": "npm run android:sync && node scripts/build-android.cjs",
     "test:browser": "node tests/workflow-browser.cjs",
-    "build:barcode": "esbuild src/barcode.js --bundle --minify --format=iife --target=es2020 --outfile=dist/vendor/barcode.js"
+    "build:barcode": "esbuild src/barcode.js --bundle --minify --format=iife --target=es2020 --outfile=dist/vendor/barcode.js",
+    "android:publish": "node scripts/publish-android-update.cjs"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.3",

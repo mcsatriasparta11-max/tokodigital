@@ -116,6 +116,15 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
  await scenario('sales',async page=>{
   for(const expected of ['orders','new','notifications']){await page.evaluate(()=>{const target=document.querySelector('#main h1'),a=new Touch({identifier:1,target,clientX:280,clientY:180}),b=new Touch({identifier:1,target,clientX:100,clientY:180});target.dispatchEvent(new TouchEvent('touchstart',{bubbles:true,touches:[a]}));target.dispatchEvent(new TouchEvent('touchend',{bubbles:true,touches:[],changedTouches:[b]}))});assert.equal(await page.evaluate(()=>PO.state.page),expected)}
  });
+ await scenario('guest',async page=>{
+  const source=fs.readFileSync('src/updater.js','utf8').replace(/^import .*$/gm,'').replaceAll('export ','');await page.addScriptTag({content:'(()=>{const registerPlugin=()=>({}),App={};'+source+';window.installTestUpdater=installUpdater})()'});
+  await page.evaluate(()=>{
+   window.updateCalls=[];window.updateAllowed=false;window.updateEvents={};window.updateAlerts=[];window.alert=message=>window.updateAlerts.push(message);
+   window.installTestUpdater({updater:{async addListener(name,fn){window.updateEvents[name]=fn;return {remove(){}}},async download(args){window.updateCalls.push(args);window.updateEvents.progress({percent:60});return {ready:true}},async install(){window.updateCalls.push('install');return window.updateAllowed?{opened:true}:{needsPermission:true}},async openSettings(){window.updateCalls.push('settings');window.updateAllowed=true}},app:{async getInfo(){return {build:'14'}},addListener(name,fn){window.updateEvents[name]=fn}},fetcher:async()=>new Response(JSON.stringify({enabled:true,versionCode:15,versionName:'3.3.8',sha256:'a'.repeat(64),url:'https://github.com/mcsatriasparta11-max/tokodigital/releases/download/v3.3.8/app.apk'}))});
+  });
+  await page.locator('#app-update-banner').waitFor({state:'visible'});await page.screenshot({path:'outputs/auto-update-preview.png'});await page.getByRole('button',{name:'Unduh & perbarui',exact:true}).click();await page.getByRole('button',{name:'Izinkan pemasangan',exact:true}).waitFor();await page.getByRole('button',{name:'Izinkan pemasangan',exact:true}).click();await page.evaluate(()=>window.updateEvents.appStateChange({isActive:true}));await page.getByRole('button',{name:'Pasang pembaruan',exact:true}).waitFor();assert.equal(await page.evaluate(()=>window.updateCalls.filter(c=>typeof c==='object').length),1);assert.equal(await page.evaluate(()=>window.updateCalls.filter(c=>c==='install').length),2);assert.equal(await page.evaluate(()=>window.updateAlerts.length),0);
+  await page.getByRole('button',{name:'Nanti',exact:true}).click();assert(await page.locator('#app-update-banner').isHidden());await page.evaluate(()=>NativeUpdates.check());await page.locator('#app-update-banner').waitFor({state:'visible'});
+ });
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});

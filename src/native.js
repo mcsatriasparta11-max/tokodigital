@@ -1,3 +1,4 @@
+import { installUpdater } from './updater.js';
 import { installStartup } from './startup.js';
 import { installPush } from './push.js';
 import { Capacitor } from '@capacitor/core';
@@ -8,6 +9,7 @@ if (Capacitor.isNativePlatform()) {
  window.NativeStartup=installStartup();
  document.documentElement.classList.remove('boot-pending');
  installPush();
+ installUpdater();
  window.NativeFiles={async saveImage(name,dataUrl){return this.save(name,dataUrl.split(',')[1],'image/png')},async save(name,content,type){
   try {
    const path='exports/'+Date.now()+'-'+name.replace(/[^A-Za-z0-9._-]/g,'_');
