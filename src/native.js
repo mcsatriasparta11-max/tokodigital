@@ -1,9 +1,11 @@
+import { installStartup } from './startup.js';
 import { installPush } from './push.js';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 if (Capacitor.isNativePlatform()) {
+ window.NativeStartup=installStartup();
  installPush();
  window.NativeFiles={async save(name,content,type){
   try {
