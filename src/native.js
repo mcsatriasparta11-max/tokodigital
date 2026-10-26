@@ -1,12 +1,12 @@
 import { installUpdater } from './updater.js';
 import { installStartup } from './startup.js';
 import { installPush } from './push.js';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 if (Capacitor.isNativePlatform()) {
- window.NativeStartup=installStartup();
+ window.NativeStartup=installStartup({systemBars:registerPlugin('SystemBars')});
  document.documentElement.classList.remove('boot-pending');
  installPush();
  installUpdater();

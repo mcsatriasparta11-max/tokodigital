@@ -1350,7 +1350,7 @@
   }
 
   // src/startup.js
-  function installStartup() {
+  function installStartup({ systemBars } = {}) {
     if (window.UPU_STARTUP_READY) return { finish() {
     } };
     const panel = document.querySelector("#startup-splash");
@@ -1360,6 +1360,8 @@
     art.src = art.dataset.src;
     panel.hidden = false;
     document.documentElement.classList.add("native-starting");
+    const barsHidden = Promise.resolve().then(() => systemBars?.hide()).catch(() => {
+    });
     const start = Date.now();
     let finished = false;
     const slow = setTimeout(() => {
@@ -1374,6 +1376,8 @@
       finished = true;
       clearTimeout(slow);
       setTimeout(() => {
+        barsHidden.then(() => systemBars?.show()).catch(() => {
+        });
         panel.classList.add("startup-leaving");
         panel.setAttribute("aria-busy", "false");
         setTimeout(() => {
@@ -1562,7 +1566,7 @@
 
   // src/native.js
   if (Capacitor.isNativePlatform()) {
-    window.NativeStartup = installStartup();
+    window.NativeStartup = installStartup({ systemBars: registerPlugin("SystemBars") });
     document.documentElement.classList.remove("boot-pending");
     installPush();
     installUpdater();

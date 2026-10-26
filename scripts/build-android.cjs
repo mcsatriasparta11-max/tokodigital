@@ -10,4 +10,4 @@ fs.writeFileSync(path.join(root,'android','local.properties'),'sdk.dir='+sdk.rep
 const env={...process.env,JAVA_HOME:java,ANDROID_HOME:sdk,GRADLE_USER_HOME:path.join(root,'.gradle-cache')};
 const result=process.platform==='win32'?spawnSync('cmd.exe',['/d','/s','/c','gradlew.bat --no-daemon assembleDebug'],{cwd:path.join(root,'android'),env,stdio:'inherit'}):spawnSync('./gradlew',['--no-daemon','assembleDebug'],{cwd:path.join(root,'android'),env,stdio:'inherit'});
 if(result.error)throw result.error;if(result.status!==0)process.exit(result.status||1);
-fs.mkdirSync(path.join(root,'outputs'),{recursive:true});const target=path.join(root,'outputs','Kedai-UPU-PO-v3.3.8-debug.apk');fs.copyFileSync(path.join(root,'android','app','build','outputs','apk','debug','app-debug.apk'),target);console.log('APK: '+target);
+fs.mkdirSync(path.join(root,'outputs'),{recursive:true});const target=path.join(root,'outputs','Kedai-UPU-PO-v3.3.9-debug.apk');fs.copyFileSync(path.join(root,'android','app','build','outputs','apk','debug','app-debug.apk'),target);console.log('APK: '+target);

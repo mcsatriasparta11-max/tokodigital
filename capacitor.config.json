@@ -14,6 +14,11 @@
         "alert",
         "sound"
       ]
+    },
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "style": "LIGHT"
     }
   }
 }
