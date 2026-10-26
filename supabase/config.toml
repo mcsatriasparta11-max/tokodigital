@@ -1,0 +1,3 @@
+
+[functions.dispatch-po-push]
+verify_jwt = false

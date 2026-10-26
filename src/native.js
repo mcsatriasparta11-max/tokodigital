@@ -1,8 +1,10 @@
+import { installPush } from './push.js';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 if (Capacitor.isNativePlatform()) {
+ installPush();
  window.NativeFiles={async save(name,content,type){
   try {
    const path='exports/'+Date.now()+'-'+name.replace(/[^A-Za-z0-9._-]/g,'_');

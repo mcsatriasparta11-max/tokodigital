@@ -2,6 +2,18 @@
   "appId": "id.kedaiupu.purchasing",
   "appName": "Kedai UPU PO",
   "webDir": "dist",
-  "server": { "androidScheme": "https" },
-  "android": { "allowMixedContent": false }
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": [
+        "alert",
+        "sound"
+      ]
+    }
+  }
 }

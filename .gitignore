@@ -12,3 +12,7 @@ android/.gradle/
 android/**/build/
 *.keystore
 *.jks
+
+android/app/google-services.json
+*service-account*.json
+firebase-admin*.json

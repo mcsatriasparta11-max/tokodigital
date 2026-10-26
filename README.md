@@ -41,3 +41,5 @@ Panduan [impor master produk dan konversi kemasan](docs/PRODUCT-IMPORT.md).
 Perubahan hak akses pengiriman: Sales hanya mengonfirmasi PO dengan estimasi awal. Purchasing/Admin menangani perubahan estimasi, dikirim, diterima, dan selesai. Aktifkan migrasi 202610260006_delivery_permissions.sql (salinan lokal .openai/enable-delivery-permissions.sql).
 
 Tahap Menunggu Pengiriman dihapus. Setelah Dikonfirmasi, Purchasing/Admin langsung menandai Dikirim. Aktifkan 202610260007_direct_shipping.sql (salinan lokal .openai/enable-direct-shipping.sql); PO lama di tahap yang dihapus dipindahkan ke Dikonfirmasi, dengan timeline dan versi diperbarui.
+
+Barcode nomor PO dan Cetak PO tersedia di halaman detail. Panduan aktivasi notifikasi Android: [ANDROID-PUSH.md](docs/ANDROID-PUSH.md).

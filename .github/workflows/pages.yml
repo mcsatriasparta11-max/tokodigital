@@ -24,6 +24,7 @@ jobs:
       - name: Test application
         run: |
           npm ci
+          npm run build:barcode
           npm run build:native
           npm test
       - uses: actions/configure-pages@v5

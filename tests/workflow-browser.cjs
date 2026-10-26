@@ -18,7 +18,7 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
  await scenario('sales',async page=>{
   assert.equal(await page.locator('#sidebar').getByText('Buat PO',{exact:true}).count(),0);assert.equal(await page.locator('#sidebar').getByText('User',{exact:true}).count(),0);
   await page.evaluate(id=>PO.open(id),OID);await page.getByRole('button',{name:'Konfirmasi PO',exact:true}).click();await page.locator('#eta').fill('2026-10-28');await page.locator('#action-note').fill('Tepung dikirim terlebih dahulu');await page.locator('#modal').getByRole('button',{name:'Konfirmasi PO',exact:true}).click();
-  await page.waitForFunction(()=>PO.state.data.orders[0].status==='Confirmed');assert.match(await page.locator('#main').innerText(),/Budi/);assert.match(await page.locator('#main').innerText(),/28 Okt 2026/i);assert.equal(await page.getByRole('button',{name:'Catat Penerimaan',exact:true}).count(),0);
+  await page.waitForFunction(()=>PO.state.data.orders[0].status==='Confirmed');assert.match(await page.locator('#main').innerText(),/Budi/);assert(await page.locator('#po-barcode rect').count()>20);assert.equal(await page.locator('#po-barcode text').textContent(),'PO-20261026-001');assert.match(await page.locator('#main').innerText(),/28 Okt 2026/i);assert.equal(await page.getByRole('button',{name:'Catat Penerimaan',exact:true}).count(),0);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:'outputs/workflow-sales-mobile.png',fullPage:true});
  });
  await scenario('purchasing',async page=>{
@@ -72,6 +72,7 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
  await scenario('sales',async page=>{await page.evaluate(()=>PO.go('import-suppliers'));await page.waitForFunction(()=>PO.state.page==='dashboard')});
  await scenario('sales',async page=>{await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});for(const name of ['Siapkan Pengiriman','Tandai Dikirim','Ubah Estimasi','Catat Penerimaan'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0)});
  await scenario('purchasing',async page=>{await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});assert.equal(await page.getByRole('button',{name:'Siapkan Pengiriman',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Ubah Estimasi',exact:true}).count(),1);await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});assert.equal(await page.getByRole('button',{name:'Tandai Dikirim',exact:true}).count(),1)});
+ await scenario('sales',async page=>{await page.evaluate(async id=>{window.pendingPushOrder=id;await PO.refresh()},OID);await page.waitForFunction(()=>PO.state.page==='detail');assert(await page.locator('#po-barcode rect').count()>20)});
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
