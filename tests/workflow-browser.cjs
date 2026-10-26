@@ -70,6 +70,8 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
   const suppliers=await page.evaluate(()=>PO.state.data.suppliers);assert.equal(suppliers.find(s=>s.id==='SUP1').sales_id,UID);assert.equal(suppliers.find(s=>s.id==='0007').name,'PT Baru');
  });
  await scenario('sales',async page=>{await page.evaluate(()=>PO.go('import-suppliers'));await page.waitForFunction(()=>PO.state.page==='dashboard')});
+ await scenario('sales',async page=>{await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});for(const name of ['Siapkan Pengiriman','Tandai Dikirim','Ubah Estimasi','Catat Penerimaan'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0)});
+ await scenario('purchasing',async page=>{await page.evaluate(()=>{window.testData.orders[0].status='Confirmed';PO.state.data.orders[0].status='Confirmed';return PO.open(PO.state.data.orders[0].id)});assert.equal(await page.getByRole('button',{name:'Siapkan Pengiriman',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'Ubah Estimasi',exact:true}).count(),1);await page.evaluate(()=>{window.testData.orders[0].status='AwaitingShipment';PO.state.data.orders[0].status='AwaitingShipment';return PO.open(PO.state.data.orders[0].id)});assert.equal(await page.getByRole('button',{name:'Tandai Dikirim',exact:true}).count(),1)});
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});

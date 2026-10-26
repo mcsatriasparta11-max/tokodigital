@@ -5,9 +5,9 @@
   const internal=['admin','purchasing'].includes(role),sales=['admin','sales'].includes(role),out=[];
   if(internal&&status==='Draft')out.push('edit','publish');
   if(sales&&status==='AwaitingConfirmation')out.push('confirm');
-  if(sales&&['Confirmed','AwaitingShipment','Shipped'].includes(status))out.push('eta');
-  if(sales&&status==='Confirmed')out.push('await_shipment');
-  if(sales&&status==='AwaitingShipment')out.push('ship');
+  if(internal&&['Confirmed','AwaitingShipment','Shipped'].includes(status))out.push('eta');
+  if(internal&&status==='Confirmed')out.push('await_shipment');
+  if(internal&&status==='AwaitingShipment')out.push('ship');
   if(internal&&status==='Shipped')out.push('receive');
   if(internal&&status==='Received')out.push('complete');
   return out;
