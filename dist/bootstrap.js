@@ -12,7 +12,7 @@
    else if(body.code!=='PGRST205'&&body.code!=='42P01')throw Error('Koneksi database belum dapat diperiksa. Coba lagi.');
   }
   window.UPU_WORKFLOW_V2=v2;
-  if(v2){await load('workflow-model.js');await load('live.js');await load('workflow.js')}
+  if(v2){await load('workflow-model.js');await load('live.js');await load('monthly.js');await load('workflow.js')}
   else{for(const script of ['data.js','app.js','cloud.js'])await load(script)}
   window.dispatchEvent(new Event('upu:ready'));
   if(window.PO?.ready)await window.PO.ready;

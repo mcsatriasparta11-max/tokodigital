@@ -60,6 +60,17 @@
    if(seen.has(id))throw Error('Baris '+(index+2)+': kode supplier duplikat.');seen.add(id);return {id,name};
   });
  }
- root.POModel={labels,actions,today,late,validateItems,parseSupplierImport,parsePack,productPack,parseProductImport};
+ function parseMonthlyImport(rows,suppliers,products){
+  if(!Array.isArray(rows)||!rows.length||rows.length>10000)throw Error('Isi 1-10.000 baris master bulanan.');const seen=new Set();
+  return rows.map((source,index)=>{const r=Object.fromEntries(Object.entries(source).map(([k,v])=>[k.replace(/^\uFEFF/,'').trim().toLowerCase(),v]));for(const key of ['periode','kode supplier','kode barang','nama barang','satuan','qty awal'])if(!Object.hasOwn(r,key))throw Error('Kolom wajib: periode,kode supplier,kode barang,nama barang,satuan,qty awal');
+   const period=String(r.periode??'').trim(),supplier_id=String(r['kode supplier']??'').trim(),product_code=String(r['kode barang']??'').trim(),name=String(r['nama barang']??'').trim(),unit=String(r.satuan??'').trim().toUpperCase(),raw=String(r['qty awal']??'').trim(),qty=Number(raw);
+   if(!/^[1-9][0-9]{3}-(0[1-9]|1[0-2])$/.test(period))throw Error('Baris '+(index+2)+': periode harus YYYY-MM, contoh 2026-10. Format sebagai Teks di Excel.');
+   const product=products.find(p=>p.id===product_code&&p.supplier_id===supplier_id);
+   if(!suppliers.some(s=>s.id===supplier_id&&s.active)||!product)throw Error('Baris '+(index+2)+': kode supplier atau barang belum sesuai master.');
+   if(!productPack(product).units.includes(unit)||!name||name.length>120||!/^\d+$/.test(raw)||!Number.isInteger(qty)||qty<1||qty>10000000)throw Error('Baris '+(index+2)+': nama, satuan, atau qty awal tidak valid.');
+   const key=JSON.stringify([period,supplier_id,product_code,unit]);if(seen.has(key))throw Error('Baris '+(index+2)+': barang dan satuan duplikat dalam periode supplier yang sama.');seen.add(key);return {period,supplier_id,product_code,name,unit,qty};
+  });
+ }
+ root.POModel={labels,actions,today,late,validateItems,parseMonthlyImport,parseSupplierImport,parsePack,productPack,parseProductImport};
  if(typeof module!=='undefined')module.exports=root.POModel;
 })(globalThis);

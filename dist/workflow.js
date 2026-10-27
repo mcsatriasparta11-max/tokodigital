@@ -50,7 +50,7 @@
  function nav(){
   const entries=[['dashboard','⌂','Dashboard'],['orders','▤','Daftar PO']];
   if(S.data.me.role==='sales')entries.push(['new','◉','PO Baru']);
-  if(internal())entries.push(['create','＋','Buat PO'],['import-po','⇩','Import PO']);
+  if(internal())entries.push(['monthly','','Master PO Bulanan'],['create','＋','Buat PO'],['import-po','⇩','Import PO']);
   entries.push(['history','◷','Riwayat PO'],['notifications','♧','Notifikasi']);
   if(internal())entries.push(['import','⇩','Import Produk'],['suppliers','♧','Supplier & Sales'],['products','▣','Produk']);
   if(S.data.me.role==='admin')entries.push(['users','','User']);
@@ -73,9 +73,9 @@
   if(!S.session)return loginScreen();
   if(!S.data?.me)return gate('Workspace belum dapat dibuka',S.error||'Akun Anda belum diberi peran. Hubungi Admin Kedai UPU.',`<div class="buttons" style="margin-top:20px">${button('Coba lagi','PO.refresh()')}${button('Keluar','PO.logout()')}</div>`);
   if(S.page==='users'&&S.data.me.role!=='admin')S.page='dashboard';
-  if(['suppliers','products','import','import-suppliers'].includes(S.page)&&!internal())S.page='dashboard';
+  if(['monthly','suppliers','products','import','import-suppliers'].includes(S.page)&&!internal())S.page='dashboard';
   if(['create','import-po'].includes(S.page)&&!internal())S.page='dashboard';
-  nav();({dashboard,menu:menuPage,orders:orderPage,new:orderPage,history:historyPage,detail,create:orderForm,notifications:notificationsPage,users:usersPage,suppliers:suppliersPage,products:productsPage,account:accountPage,import:importPage,'import-suppliers':supplierImportPage,'import-po':poImportPage}[S.page]||dashboard)();
+  nav();({dashboard,monthly:monthly.page,menu:menuPage,orders:orderPage,new:orderPage,history:historyPage,detail,create:orderForm,notifications:notificationsPage,users:usersPage,suppliers:suppliersPage,products:productsPage,account:accountPage,import:importPage,'import-suppliers':supplierImportPage,'import-po':poImportPage}[S.page]||dashboard)();
   if(['users'].includes(S.page))document.querySelectorAll('#main table').forEach(table=>{table.classList.add('mobile-admin-table');const labels=[...table.querySelectorAll('thead th')].map(th=>th.textContent);table.querySelectorAll('tbody tr').forEach(row=>[...row.cells].forEach((cell,i)=>cell.dataset.label=labels[i]||''))});
  }
   function registrationForm(adminMode=false){
@@ -173,12 +173,15 @@
   const suppliers=S.data.suppliers.filter(s=>s.active);if(!suppliers.length){$('#main').innerHTML=heading('Buat PO','Admin perlu menambahkan supplier terlebih dahulu.');return}
   if(!existing&&!formRequest)formRequest=crypto.randomUUID();
   const html=`<h2>${existing?'Edit Draft':'Buat Purchase Order'}</h2><form id="draft-form" onsubmit="event.preventDefault();PO.saveDraft(this,false)"><input name="order_id" type="hidden" value="${existing?.id||''}"><input name="version" type="hidden" value="${existing?.version??''}"><div class="draft-header"><div class="form-group"><label>Supplier</label><select name="supplier" required onchange="PO.supplierChanged()">${suppliers.map(s=>`<option value="${esc(s.id)}" ${s.id===existing?.supplier_id?'selected':''}>${esc(s.name)}${s.sales_id?'':' · belum ada Sales'}</option>`).join('')}</select></div><div class="form-group"><label>Tanggal PO</label><input name="date" type="date" value="${existing?.order_date||M.today()}" required></div></div><div class="form-group"><label>Catatan Purchasing</label><textarea name="note" rows="3" maxlength="2000">${esc(existing?.note||'')}</textarea></div><p class="sub">Nomor PO diberikan otomatis oleh server. Estimasi antar diisi Sales saat konfirmasi.</p><div id="draft-items"></div><button type="button" class="btn" onclick="PO.addItem()">＋ Tambah barang</button><div class="modal-actions"><button class="btn" type="submit">Simpan Draft</button><button class="btn primary" type="button" onclick="PO.saveDraft(this.form,true)">Terbitkan PO</button></div></form>`;
-  if(existing)modal(html);else $('#main').innerHTML=heading('Buat Purchase Order','Simpan sebagai Draft atau terbitkan langsung ke Sales supplier.')+`<section class="panel draft-panel">${html}</section>`;
+  if(existing)modal(html);else $('#main').innerHTML='<div class="po-source-choice"><b>PO Manual</b>'+button('Dari Master Bulanan',"PO.go('monthly')")+'</div>'+heading('Buat Purchase Order','Simpan sebagai Draft atau terbitkan langsung ke Sales supplier.')+`<section class="panel draft-panel">${html}</section>`;
   $('#draft-form').dataset.supplier=$('#draft-form').elements.supplier.value;
   (existing?items(existing.id):[{}]).forEach(i=>addItem(i));
  }
 
 
+ const monthly=window.createMonthlyPO({S,client,C,M,esc,heading,button,toast,internal,download,startDraft:selection=>{
+  if(!internal())return;S.page='create';formRequest=crypto.randomUUID();nav();orderForm();const form=$('#draft-form');if(!form)return;form.elements.supplier.value=selection.supplier_id;form.dataset.supplier=selection.supplier_id;form.elements.note.value='Master PO bulanan '+selection.period;$('#draft-items').innerHTML='';selection.items.forEach(item=>addItem(item));window.scrollTo(0,0);
+ }});
  function supplierChanged(){const form=$('#draft-form'),previous=form.dataset.supplier;if($('#draft-items').children.length&&!window.confirm('Mengubah supplier akan mengosongkan daftar barang. Lanjutkan?')){if(previous)form.elements.supplier.value=previous;return}form.dataset.supplier=form.elements.supplier.value;$('#draft-items').innerHTML='';addItem()}
  async function saveDraft(form,publish){if(!form.reportValidity())return;try{const rows=[...form.querySelectorAll('.draft-item')].map(row=>({product_code:row.querySelector('.item-product').value||null,name:row.querySelector('.item-name').value.trim(),qty:Number(row.querySelector('.item-qty').value),unit:row.querySelector('.item-unit').value.trim()}));M.validateItems(rows);const payload={supplier_id:form.elements.supplier.value,order_date:form.elements.date.value,note:form.elements.note.value,items:rows,publish};if(form.elements.order_id.value){payload.id=form.elements.order_id.value;payload.version=Number(form.elements.version.value)}else payload.request_id=formRequest;
   const result=await command('draft',payload,publish?'PO diterbitkan ke Sales supplier.':'Draft tersimpan.');if(result){S.selected=result.id;S.page='detail';formRequest=null;render()}
@@ -298,7 +301,7 @@
  }
  async function enablePush(){try{await window.NativePush?.enable();toast('Pendaftaran notifikasi diproses.')}catch(e){toast(e.message||'Notifikasi belum dapat diaktifkan.')}}
  async function logout(){if(S.busy)return;if($('#modal').open&&!confirm('Tutup formulir dan keluar?'))return;if(window.NativePush){try{await NativePush.disable()}catch(e){toast(e.message);return}}const {error}=await client.auth.signOut();if(error)return toast('Belum dapat keluar. Periksa koneksi.');S.session=null;S.data=null;S.epoch++;$('#modal').close();render()}
- window.PO={state:S,chatInbox,chatSearch:value=>{S.chatSearch=value;updateChatInbox()},openChat,closeChat,sendChat,chatRoom:value=>{if(chatSending)return;S.chatSupplier=value;S.chatDraft='';chatRequest=null;chatPage()},chatDraft:value=>{S.chatDraft=value},openMenu,closeMenu,enablePush,supplierTemplate,readSupplierImport,commitSupplierImport,registrationForm,register,reviewRegistration,showLogin:loginScreen,go,open,close,action,submitAction,saveDraft,addItem,pickProduct,updateConversion,productTemplate,readPOImport,commitPOImport,supplierChanged,userForm,saveUser,supplierForm,saveSupplier,productForm,saveProduct,readNotification,backup,exportOrders,exportImage,login,logout,readImport,commitImport,
+ window.PO={state:S,monthly,chatInbox,chatSearch:value=>{S.chatSearch=value;updateChatInbox()},openChat,closeChat,sendChat,chatRoom:value=>{if(chatSending)return;S.chatSupplier=value;S.chatDraft='';chatRequest=null;chatPage()},chatDraft:value=>{S.chatDraft=value},openMenu,closeMenu,enablePush,supplierTemplate,readSupplierImport,commitSupplierImport,registrationForm,register,reviewRegistration,showLogin:loginScreen,go,open,close,action,submitAction,saveDraft,addItem,pickProduct,updateConversion,productTemplate,readPOImport,commitPOImport,supplierChanged,userForm,saveUser,supplierForm,saveSupplier,productForm,saveProduct,readNotification,backup,exportOrders,exportImage,login,logout,readImport,commitImport,
   refresh:(background=false)=>load(background),search:value=>{S.query=value;$('#po-list').innerHTML=table(filtered());updateStatusCounts()},filter:value=>{S.filter=value;orderPage()}};
  window.navigate=page=>go(page==='activity'?'notifications':page==='profile'?'account':page==='home'?'dashboard':page);
 
