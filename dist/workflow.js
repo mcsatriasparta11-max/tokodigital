@@ -330,7 +330,7 @@
   main.addEventListener('touchstart',event=>{
    gesture=null;if(event.touches.length!==1||blocked()||!tabs().includes(S.page))return;
    const target=event.target;if(target.closest('input,textarea,select,a,[contenteditable="true"],[role="slider"]'))return;
-   const button=target.closest('button');if(button&&!button.matches('.po-card,.notification-row'))return;
+   const button=target.closest('button');if(button&&!button.matches('.po-card,.notification-row,.stat-link'))return;
    for(let node=target;node&&node!==main;node=node.parentElement){if(node.scrollWidth>node.clientWidth+2&&/auto|scroll/.test(getComputedStyle(node).overflowX))return}
    const touch=event.touches[0];gesture={x:touch.clientX,y:touch.clientY,id:touch.identifier,page:S.page,epoch:S.epoch,time:Date.now(),horizontal:false};
   },{passive:true});
