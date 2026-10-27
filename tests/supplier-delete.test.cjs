@@ -1,0 +1,25 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
+const W='11111111-1111-4111-8111-111111111111',A='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',B='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',S='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+test('supplier edit/delete enforces roles, preserves dependencies, rejects stale confirmations and releases only its own Sales mapping',async()=>{const pg=new PGlite();try{
+ await pg.exec(`create role service_role;create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}',email_confirmed_at timestamptz,created_at timestamptz default now());create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to anon,authenticated;grant execute on function auth.uid() to anon,authenticated;`);
+
+
+
+
+ for(const n of fs.readdirSync('supabase/migrations').filter(n=>/^2026102600(0[1-9]|1[1-9]|2[0-3])_/.test(n)).sort())await pg.exec(fs.readFileSync('supabase/migrations/'+n,'utf8'));
+ for(const [id,role] of [[A,'admin'],[B,'purchasing'],[S,'sales']]){await pg.query('insert into auth.users(id,email) values($1,$2)',[id,id+'@test.local']);await pg.query('insert into po_users(workspace_id,user_id,name,email,role) values($1,$2,$3,$4,$3)',[W,id,role,id+'@test.local'])}
+ for(const id of ['EMPTY','PRODUCT','ORDER','MONTH','CHAT','RACE'])await pg.query('insert into po_suppliers(workspace_id,id,name) values($1,$2,$2)',[W,id]);
+ for(const id of ['EMPTY','CHAT']){await pg.query('update po_suppliers set sales_id=$1 where workspace_id=$2 and id=$3',[S,W,id]);await pg.query('insert into po_supplier_sales values($1,$2,$3,1)',[W,id,S])}
+ for(const [id,supplier] of [['P','PRODUCT'],['M','MONTH']])await pg.query("insert into po_products(workspace_id,id,name,supplier_id,unit) values($1,$2,$2,$3,'PCS')",[W,id,supplier]);
+ await pg.query("insert into po_orders(workspace_id,number,supplier_id,order_date) values($1,'PO-TEST','ORDER','2026-10-27')",[W]);await pg.query("insert into po_monthly_periods(workspace_id,period) values($1,'2026-10')",[W]);await pg.query("insert into po_monthly_items values($1,'2026-10','MONTH','M','Product','PCS',5)",[W]);
+ const as=async(id,fn)=>{await pg.exec('set role authenticated');await pg.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);try{return await fn()}finally{await pg.exec('reset role')}};
+ const info=id=>pg.query('select po_supplier_delete_info($1,$2) result',[W,id]).then(r=>r.rows[0].result);const remove=(id,expected)=>pg.query('select po_supplier_delete($1,$2,$3)',[W,id,JSON.stringify(expected)]);
+ await as(B,()=>pg.query("select po_chat_send($1,'CHAT','dddddddd-dddd-4ddd-8ddd-dddddddddddd','Hello')",[W]));
+ for(const [id,key] of [['PRODUCT','products'],['ORDER','orders'],['MONTH','monthly'],['CHAT','chats']]){const details=await as(B,()=>info(id));assert(details[key]>0);assert.equal(details.can_delete,false);await as(B,()=>assert.rejects(remove(id,details.supplier),/masih dipakai/))}
+ const original=await as(B,()=>info('EMPTY'));assert.equal(original.can_delete,true);await as(S,()=>assert.rejects(info('EMPTY'),/Hanya Admin/));await as(S,()=>assert.rejects(remove('EMPTY',original.supplier),/Hanya Admin/));
+ await as(B,()=>pg.query("select po_command($1,'supplier',$2)",[W,JSON.stringify({id:'EMPTY',name:'Supplier Edited',active:true,sales_ids:[S]})]));await as(B,()=>assert.rejects(remove('EMPTY',original.supplier),/berubah/));
+ const latest=await as(A,()=>info('EMPTY'));assert.equal(latest.supplier.name,'Supplier Edited');await as(B,()=>remove('EMPTY',latest.supplier));assert.equal((await pg.query("select count(*)::int n from po_suppliers where id='EMPTY'")).rows[0].n,0);assert.equal((await pg.query('select count(*)::int n from po_users')).rows[0].n,3);assert.equal((await pg.query("select count(*)::int n from po_supplier_sales where supplier_id='CHAT'")).rows[0].n,1);
+ const race=await as(A,()=>info('RACE'));await pg.query("insert into po_products(workspace_id,id,name,supplier_id,unit) values($1,'R','Race','RACE','PCS')",[W]);await as(A,()=>assert.rejects(remove('RACE',race.supplier),/masih dipakai/));
+ await as(B,()=>pg.query("select po_command($1,'supplier',$2)",[W,JSON.stringify({id:'ORDER',name:'Updated Order Supplier',active:true,sales_ids:[]})]));assert.equal((await pg.query("select s.name from po_orders o join po_suppliers s on s.workspace_id=o.workspace_id and s.id=o.supplier_id")).rows[0].name,'Updated Order Supplier');assert.equal((await pg.query('select count(*)::int n from po_chat_messages')).rows[0].n,1);
+ await as(B,()=>assert.rejects(pg.query('delete from po_suppliers'),/permission denied/));await as(B,()=>assert.rejects(pg.query("select po_supplier_delete_info('22222222-2222-4222-8222-222222222222','ORDER')"),/Hanya Admin/));await pg.exec('set role anon');await assert.rejects(info('ORDER'),/permission denied/);await pg.exec('reset role');
+ }finally{await pg.close()}});
