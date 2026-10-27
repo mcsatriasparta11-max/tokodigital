@@ -95,3 +95,5 @@ h1,h2,h3,.logo b,.stat strong{font-family:inherit}button,input,select,textarea{-
 .product-search-bar{display:grid;gap:6px;padding:14px 16px;border-bottom:1px solid var(--line)}.product-search-bar label{font-size:12px;font-weight:600}.product-search-bar input{width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;font-size:16px}.product-search-bar small{color:#64748b;font-size:12px}
 
 .workflow-stats .stat-link{text-align:left;cursor:pointer;background:white;transition:border-color .15s,box-shadow .15s}.workflow-stats .stat-link:hover{border-color:#f87171}.workflow-stats .stat-link:focus-visible{outline:2px solid #b91c1c;outline-offset:3px}.workflow-stats .stat-link:active{background:#fff1f2}
+
+#modal:has(.po-image-preview){width:min(1100px,calc(100vw - 24px));max-width:calc(100vw - 24px)}.po-image-preview img{display:block;width:100%;height:auto;border:1px solid #e2e8f0;border-radius:6px}.po-image-preview .modal-actions{position:sticky;bottom:0;background:white;padding:12px 0;margin-bottom:0}

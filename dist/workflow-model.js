@@ -32,6 +32,10 @@
  function productPack(product){
   return product?.pack_units&&product?.pack_factors?{units:product.pack_units,factors:product.pack_factors,baseUnit:product.pack_units.at(-1)}:{units:[String(product?.unit||'PCS').toUpperCase()],factors:[1],baseUnit:String(product?.unit||'PCS').toUpperCase()};
  }
+ function quantityPresentation(item,product){
+  const fallback={unit:item.unit,qty:item.qty??'-',baseQty:item.base_qty??item.qty??'-',baseUnit:item.base_unit||item.unit};
+  try{const units=item.display_pack_units||product?.pack_units,factors=item.display_pack_factors||product?.pack_factors;if(!units||!factors)return fallback;const pack=parsePack(units.join('-'),factors.join('-')),source=pack.units.indexOf(String(item.unit).toUpperCase());if(source<0)return fallback;const total=Number(item.base_qty??(Number(item.qty)*(item.unit_factor??pack.factors[source])));if(!Number.isSafeInteger(total)||total<1)return fallback;if(item.base_unit&&item.base_unit!==pack.baseUnit)return fallback;let remaining=total;const parts=[];for(let i=0;i<pack.units.length;i++){const count=Math.floor(remaining/pack.factors[i]);if(count){parts.push({unit:pack.units[i],qty:count});remaining-=count*pack.factors[i];}}return {unit:parts[0].unit,qty:parts.map(p=>p.qty+' '+p.unit).join(' '),baseQty:total,baseUnit:pack.baseUnit};}catch{return fallback}
+ }
  function parseProductImport(rows,suppliers,products=[]){
   if(!Array.isArray(rows)||!rows.length||rows.length>10000)throw Error('File harus berisi 1–10.000 baris produk.');
   const headers=['kode','nama barang','kelp-satuan','kelp-volume','suplier'],seen=new Set();
@@ -82,6 +86,6 @@
    if(!groups.has(product.supplier_id))groups.set(product.supplier_id,[]);groups.get(product.supplier_id).push({product_code,name,unit,qty});
   });if(groups.size>100)throw Error('Maksimal 100 supplier per impor.');return [...groups].map(([supplier_id,items])=>({supplier_id,items}));
  }
- root.POModel={labels,actions,today,late,validateItems,parsePOImport,parseMonthlyImport,parseSupplierImport,parsePack,productPack,parseProductImport};
+ root.POModel={quantityPresentation,labels,actions,today,late,validateItems,parsePOImport,parseMonthlyImport,parseSupplierImport,parsePack,productPack,parseProductImport};
  if(typeof module!=='undefined')module.exports=root.POModel;
 })(globalThis);
