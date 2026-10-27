@@ -1,7 +1,7 @@
 {
   "name": "kedai-upu-po",
   "private": true,
-  "version": "3.3.20",
+  "version": "3.3.21",
   "scripts": {
     "test": "node check.cjs && node --test tests/*.test.cjs",
     "build:native": "esbuild src/native.js --bundle --format=iife --target=es2020 --outfile=dist/native.js",
