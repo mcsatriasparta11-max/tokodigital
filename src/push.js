@@ -17,7 +17,7 @@ export function installPush(){
   async enable(){
    if(starting)return;if(!user)throw Error('Masuk ke akun terlebih dahulu.');starting=true;const run=generation;
    try{let permission=await PushNotifications.checkPermissions();if(['prompt','prompt-with-rationale'].includes(permission.receive))permission=await PushNotifications.requestPermissions();if(run!==generation)return;if(permission.receive!=='granted'){status('Izin notifikasi belum diberikan. Aktifkan melalui Pengaturan Android.');throw Error('Izin notifikasi belum diberikan.')}
-    await PushNotifications.createChannel({id:'upu-po-v2',name:'Purchase Order',description:'PO baru dan pembaruan status',importance:5,visibility:0});
+    await PushNotifications.createChannel({id:'upu-po-v3',name:'Purchase Order',description:'PO dan chat dengan suara Kedai UPU',sound:'kedai_upu',importance:5,visibility:0});
     if(run!==generation)return;enabled=true;status('Menghubungkan perangkat ke Firebase...');await PushNotifications.register();
    }finally{starting=false}
   },

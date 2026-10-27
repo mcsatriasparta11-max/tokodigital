@@ -86,3 +86,12 @@ h1,h2,h3,.logo b,.stat strong{font-family:inherit}button,input,select,textarea{-
 .forecast-table-wrap{width:100%}.forecast-table{width:100%;table-layout:fixed;border-collapse:collapse;min-width:0!important}.forecast-table th,.forecast-table td{padding:6px 3px;border:1px solid #cbd5e1;font-size:11px;white-space:normal;overflow-wrap:anywhere;vertical-align:middle}.forecast-table th{background:#f1f5f9}.forecast-table small{display:block;font-size:10px;color:#b91c1c}.forecast-table .monthly-qty{width:100%;min-width:0;min-height:34px;height:34px;font-size:12px;padding:3px 1px;border-radius:3px;appearance:textfield}.forecast-table .monthly-qty::-webkit-inner-spin-button{appearance:none}.forecast-table .monthly-pick{width:16px;height:20px;margin:0;accent-color:#b91c1c}.forecast-table .numeric{text-align:right}.forecast-table tr:nth-child(even){background:#f8fafc}
 
 .forecast-table td:first-child,.forecast-table th:first-child{padding:4px 1px;text-align:center}.forecast-table .monthly-pick{width:14px;height:20px}#monthly-root .buttons{display:flex;flex-wrap:wrap}#monthly-root input[type=file]{max-width:100%;width:100%;box-sizing:border-box}#monthly-root .monthly-selection{flex-wrap:wrap}
+
+/* Keep notices above the content without blocking navigation or chat. */
+#toast{top:calc(76px + env(safe-area-inset-top,0px));bottom:auto;max-width:calc(100vw - 32px);width:max-content;pointer-events:none;overflow-wrap:anywhere}
+
+.navitem .symbol svg{display:block;width:20px;height:20px;flex-shrink:0}
+
+.product-search-bar{display:grid;gap:6px;padding:14px 16px;border-bottom:1px solid var(--line)}.product-search-bar label{font-size:12px;font-weight:600}.product-search-bar input{width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;font-size:16px}.product-search-bar small{color:#64748b;font-size:12px}
+
+.workflow-stats .stat-link{text-align:left;cursor:pointer;background:white;transition:border-color .15s,box-shadow .15s}.workflow-stats .stat-link:hover{border-color:#f87171}.workflow-stats .stat-link:focus-visible{outline:2px solid #b91c1c;outline-offset:3px}.workflow-stats .stat-link:active{background:#fff1f2}
