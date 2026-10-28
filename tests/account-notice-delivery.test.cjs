@@ -1,0 +1,28 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
+const W='11111111-1111-4111-8111-111111111111',A='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',B='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',S='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+test('Restored sessions notify reviewers once; registration reaches Purchasing and Admin; notices are deduplicated per authenticated session and online presence is scoped',async()=>{const pg=new PGlite();try{
+ await pg.exec(`create role service_role;create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}',email_confirmed_at timestamptz,created_at timestamptz default now());create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to anon,authenticated;grant execute on function auth.uid() to anon,authenticated;`);
+
+
+
+
+ for(const n of fs.readdirSync('supabase/migrations').filter(n=>/^2026102600(0[1-9]|1[1-9]|2[0-9])_/.test(n)).sort())await pg.exec(fs.readFileSync('supabase/migrations/'+n,'utf8'));
+ await pg.exec(fs.readFileSync('supabase/migrations/202610260036_account_notice_delivery.sql','utf8'));
+ for(const [id,role] of [[A,'admin'],[B,'purchasing'],[S,'sales']]){await pg.query('insert into auth.users(id,email) values($1,$2)',[id,id+'@test.local']);await pg.query('insert into po_users(workspace_id,user_id,name,email,role) values($1,$2,$3,$4,$3)',[W,id,role,id+'@test.local'])}
+
+
+ const sid1='11111111-aaaa-4aaa-8aaa-aaaaaaaaaaaa',sid2='22222222-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+ const as=async(id,sid,fn)=>{await pg.exec('set role authenticated');await pg.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await pg.query("select set_config('request.jwt.claims',$1,false)",[JSON.stringify(sid?{session_id:sid}:{})]);try{return await fn()}finally{await pg.exec('reset role')}};
+ const ping=(event='online')=>pg.query('select po_account_activity($1,$2)',[W,event]);const notices=()=>pg.query("select * from po_notifications where kind='login' order by created_at");const online=()=>pg.query('select po_online_users($1) result',[W]).then(r=>r.rows[0].result);
+ await pg.query('insert into po_push_devices(token,workspace_id,user_id) values($1,$2,$3),($4,$2,$5)',['admin-device-token-123456789',W,A,'purchasing-device-token-12345',B]);
+ await as(S,sid1,()=>ping());assert.equal((await notices()).rows.length,2);await as(S,sid1,()=>ping('login'));let rows=(await notices()).rows;assert.equal(rows.length,2);assert(rows.every(n=>n.subject_user_id===S));assert(rows.every(n=>n.user_id!==S));assert(rows.some(n=>n.user_id===A));assert(rows.some(n=>n.user_id===B));assert.match(rows[0].title,/sales baru saja masuk/);assert.equal((await pg.query('select count(*)::int n from po_push_queue')).rows[0].n,2);
+ await as(S,sid1,()=>ping('login'));await as(S,sid1,()=>ping());assert.equal((await notices()).rows.length,2);
+ await as(S,sid2,()=>ping('login'));assert.equal((await notices()).rows.length,4);await as(S,sid1,()=>ping('offline'));assert((await as(A,sid1,online)).find(u=>u.user_id===S).online);await as(S,sid2,()=>ping('offline'));assert.equal((await as(B,sid1,online)).find(u=>u.user_id===S).online,false);
+ await as(S,sid2,()=>ping());await pg.query("update po_account_sessions set last_seen=now()-interval '2 minutes' where user_id=$1",[S]);assert.equal((await as(A,sid1,online)).find(u=>u.user_id===S).online,false);
+ await as(S,sid1,()=>assert.rejects(online(),/Hanya pengelola/));await as(S,null,()=>assert.rejects(ping('login'),/Sesi autentikasi/));await as(S,sid1,()=>assert.rejects(ping('invalid'),/tidak valid/));await as(S,sid1,()=>assert.rejects(pg.query('select * from po_account_sessions'),/permission denied/));
+ const stranger='dddddddd-dddd-4ddd-8ddd-dddddddddddd';await pg.query('insert into auth.users(id,email) values($1,$2)',[stranger,'stranger@test.local']);await as(stranger,sid1,()=>assert.rejects(ping('login'),/belum memiliki akses/));
+ await as(A,sid1,async()=>{const n=await pg.query("select count(*)::int n from po_notifications where kind='login'");assert.equal(n.rows[0].n,2)});await as(S,sid1,async()=>assert.equal((await pg.query("select count(*)::int n from po_notifications where kind='login'")).rows[0].n,0));
+ await pg.query('update po_users set active=false where user_id=$1',[B]);const sid3='33333333-aaaa-4aaa-8aaa-aaaaaaaaaaaa';await as(S,sid3,()=>ping('login'));rows=(await notices()).rows;assert.equal(rows.length,5);assert.equal(rows.at(-1).user_id,A);await as(B,sid1,()=>assert.rejects(ping(),/belum memiliki akses/));
+ const applicant='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';await pg.query('update po_users set active=true where user_id=$1',[B]);await pg.query('insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)',[applicant,'applicant@test.local',JSON.stringify({upu_workspace_id:W})]);const review=(await pg.query("select user_id from po_notifications where kind='registration' and subject_user_id=$1",[applicant])).rows;assert.deepEqual(review.map(n=>n.user_id).sort(),[A,B].sort());await as(B,sid1,async()=>{assert.equal((await pg.query("select count(*)::int n from po_notifications where kind='registration'")).rows[0].n,1)});
+ await pg.exec('set role anon');await assert.rejects(ping(),/permission denied/);await pg.exec('reset role');
+ }finally{await pg.close()}});
