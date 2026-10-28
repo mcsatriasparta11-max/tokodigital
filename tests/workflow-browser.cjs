@@ -127,8 +127,8 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
  await scenario('admin',async page=>{
   await page.evaluate(()=>PO.go('import'));await page.waitForFunction(()=>!!window.XLSX);
   await page.getByLabel('File master produk').setInputFiles({name:'produk.csv',mimeType:'text/csv',buffer:Buffer.from('kode,nama barang,kelp-satuan,kelp-volume,suplier\r\n000123,Biskuit,CRT-PCS,24-1,SUP1\r\n')});
-  await page.getByRole('button',{name:'Simpan Master Produk',exact:true}).waitFor();assert.match(await page.locator('#import-review').innerText(),/1 CRT = 24 PCS/);
-  await page.getByRole('button',{name:'Simpan Master Produk',exact:true}).click();await page.waitForFunction(()=>PO.state.page==='products');
+  await page.getByRole('button',{name:'Ganti Master Produk',exact:true}).waitFor();assert.match(await page.locator('#import-review').innerText(),/1 CRT = 24 PCS/);
+  await page.evaluate(()=>{window.confirm=()=>true});await page.getByRole('button',{name:'Ganti Master Produk',exact:true}).click();await page.waitForFunction(()=>PO.state.page==='products');
   const p=await page.evaluate(()=>PO.state.data.products[0]);assert.equal(p.id,'000123');assert.deepEqual(p.pack_factors,[24,1]);assert.equal(await page.evaluate(()=>PO.state.data.orders.length),1);
   await page.evaluate(()=>PO.go('create'));await page.locator('.item-product').selectOption('000123');assert.equal(await page.locator('.item-code').inputValue(),'000123');await page.locator('.item-qty').fill('2');assert.match(await page.locator('.pack-hint').innerText(),/48 PCS/);
   await page.locator('.item-unit').selectOption('PCS');await page.locator('.item-qty').fill('7');assert.match(await page.locator('.pack-hint').innerText(),/7 PCS = 7 PCS/);
