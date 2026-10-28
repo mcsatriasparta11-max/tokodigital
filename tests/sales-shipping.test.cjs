@@ -30,6 +30,6 @@ test('Sales dispatches; Purchasing can receive confirmed orders without shipment
 });
 
 
-test('Purchasing progress actions only record receipt; Sales gets dispatch',()=>{const M=require('../dist/workflow-model.js');assert.deepEqual(M.actions('purchasing','Confirmed'),['receive','cancel']);assert.deepEqual(M.actions('purchasing','Shipped'),['receive','cancel']);assert.deepEqual(M.actions('purchasing','Received'),[]);assert.deepEqual(M.actions('sales','Confirmed',true),['ship']);assert.deepEqual(M.actions('sales','Shipped',true),[]);assert(M.actions('admin','Confirmed').includes('receive'))});
+test('Purchasing progress actions only record receipt; Sales gets dispatch',()=>{const M=require('../dist/workflow-model.js');assert.deepEqual(M.actions('purchasing','Confirmed'),['receive','cancel']);assert.deepEqual(M.actions('purchasing','Shipped'),['receive','cancel']);assert.deepEqual(M.actions('purchasing','Received'),['complete']);assert.deepEqual(M.actions('sales','Confirmed',true),['ship']);assert.deepEqual(M.actions('sales','Shipped',true),[]);assert(M.actions('admin','Confirmed').includes('receive'))});
 
 test('each Sales must confirm independently and cancellation is unavailable after receipt',()=>{const M=require('../dist/workflow-model.js');assert.deepEqual(M.actions('sales','Confirmed',false),['confirm']);assert.deepEqual(M.actions('sales','Received',false),['confirm']);assert.deepEqual(M.actions('sales','Cancelled',false),[]);assert(M.actions('purchasing','Draft').includes('cancel'));assert(!M.actions('admin','Received').includes('cancel'))});

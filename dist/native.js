@@ -1395,7 +1395,7 @@
 
   // src/push.js
   function installPush() {
-    let client, workspace, user, token = localStorage.getItem("upu-push-token"), starting = false, enabled = false, generation = 0, pendingSave = Promise.resolve();
+    let client, workspace, user, token = localStorage.getItem("upu-push-token"), starting = false, enabled = false, generation = 0, pendingSave = Promise.resolve(), registeredUser = null, lastAttempt = 0, candidate = null;
     const status = (message) => {
       window.pushStatus = message;
       const el = document.querySelector("#push-status");
@@ -1404,12 +1404,15 @@
     async function saveToken(value) {
       const actor = user, c = client, w = workspace;
       if (!enabled || !actor || !c) return;
+      candidate = value;
       const { error } = await c.rpc("po_push_register", { w, device_token: value });
       if (actor !== user) return;
       if (error) {
+        registeredUser = null;
         status("Pendaftaran perangkat belum berhasil. Aktifkan kembali setelah pengelola menyiapkan server.");
         return;
       }
+      registeredUser = actor;
       token = value;
       localStorage.setItem("upu-push-token", value);
       localStorage.setItem("upu-push-user", actor);
@@ -1419,6 +1422,7 @@
       pendingSave = pendingSave.then(() => saveToken(value)).catch(() => status("Pendaftaran perangkat gagal. Coba lagi."));
     });
     PushNotifications.addListener("registrationError", () => {
+      registeredUser = null;
       status("Firebase belum terhubung. Hubungi pengelola aplikasi.");
     });
     PushNotifications.addListener("pushNotificationReceived", () => {
@@ -1450,13 +1454,19 @@
         workspace = w;
         user = id;
         if (window.pushStatus) status(window.pushStatus);
-        if (changed) this.enable().catch(() => {
+        if (changed) {
+          registeredUser = null;
+          candidate = null;
+          lastAttempt = 0;
+        }
+        if (changed || !registeredUser && Date.now() - lastAttempt >= 3e4) this.enable().catch(() => {
         });
       },
       async enable() {
         if (starting) return;
         if (!user) throw Error("Masuk ke akun terlebih dahulu.");
         starting = true;
+        lastAttempt = Date.now();
         const run = generation;
         try {
           let permission = await PushNotifications.checkPermissions();
@@ -1470,6 +1480,10 @@
           if (run !== generation) return;
           enabled = true;
           status("Menghubungkan perangkat ke Firebase...");
+          if (candidate) {
+            pendingSave = pendingSave.then(() => saveToken(candidate));
+            await pendingSave;
+          }
           await PushNotifications.register();
         } finally {
           starting = false;
@@ -1477,6 +1491,9 @@
       },
       async disable() {
         enabled = false;
+        registeredUser = null;
+        candidate = null;
+        lastAttempt = 0;
         generation++;
         await pendingSave;
         if (token && client) {

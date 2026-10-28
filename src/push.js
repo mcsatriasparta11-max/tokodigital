@@ -1,10 +1,10 @@
 import { PushNotifications } from '@capacitor/push-notifications';
 export function installPush(){
- let client,workspace,user,token=localStorage.getItem('upu-push-token'),starting=false,enabled=false,generation=0,pendingSave=Promise.resolve();
+ let client,workspace,user,token=localStorage.getItem('upu-push-token'),starting=false,enabled=false,generation=0,pendingSave=Promise.resolve(),registeredUser=null,lastAttempt=0,candidate=null;
  const status=message=>{window.pushStatus=message;const el=document.querySelector('#push-status');if(el)el.textContent=message};
- async function saveToken(value){const actor=user,c=client,w=workspace;if(!enabled||!actor||!c)return;const {error}=await c.rpc('po_push_register',{w,device_token:value});if(actor!==user)return;if(error){status('Pendaftaran perangkat belum berhasil. Aktifkan kembali setelah pengelola menyiapkan server.');return}token=value;localStorage.setItem('upu-push-token',value);localStorage.setItem('upu-push-user',actor);status('Notifikasi Android aktif.')}
+ async function saveToken(value){const actor=user,c=client,w=workspace;if(!enabled||!actor||!c)return;candidate=value;const {error}=await c.rpc('po_push_register',{w,device_token:value});if(actor!==user)return;if(error){registeredUser=null;status('Pendaftaran perangkat belum berhasil. Aktifkan kembali setelah pengelola menyiapkan server.');return}registeredUser=actor;token=value;localStorage.setItem('upu-push-token',value);localStorage.setItem('upu-push-user',actor);status('Notifikasi Android aktif.')}
  PushNotifications.addListener('registration',({value})=>{pendingSave=pendingSave.then(()=>saveToken(value)).catch(()=>status('Pendaftaran perangkat gagal. Coba lagi.'))});
- PushNotifications.addListener('registrationError',()=>{status('Firebase belum terhubung. Hubungi pengelola aplikasi.')});
+ PushNotifications.addListener('registrationError',()=>{registeredUser=null;status('Firebase belum terhubung. Hubungi pengelola aplikasi.')});
  PushNotifications.addListener('pushNotificationReceived',()=>{window.PO?.refresh(true)});
  PushNotifications.addListener('pushNotificationActionPerformed',async({notification})=>{
   if(notification.data?.screen==='chat'){const room=notification.data?.supplier_id;if(typeof room!=='string'||!/^[A-Za-z0-9_-]{1,120}$/.test(room))return;window.pendingPushScreen='chat';window.pendingPushSupplier=room;if(window.PO?.state.data?.me)await window.PO.refresh();return}
@@ -13,17 +13,17 @@ export function installPush(){
   window.pendingPushOrder=id;if(window.PO?.state.data?.me)await window.PO.refresh();
  });
  window.NativePush={
-  bind(c,w,id){const changed=user!==id;client=c;workspace=w;user=id;if(window.pushStatus)status(window.pushStatus);if(changed)this.enable().catch(()=>{})},
+  bind(c,w,id){const changed=user!==id;client=c;workspace=w;user=id;if(window.pushStatus)status(window.pushStatus);if(changed){registeredUser=null;candidate=null;lastAttempt=0}if(changed||(!registeredUser&&Date.now()-lastAttempt>=30000))this.enable().catch(()=>{})},
   async enable(){
-   if(starting)return;if(!user)throw Error('Masuk ke akun terlebih dahulu.');starting=true;const run=generation;
+   if(starting)return;if(!user)throw Error('Masuk ke akun terlebih dahulu.');starting=true;lastAttempt=Date.now();const run=generation;
    try{let permission=await PushNotifications.checkPermissions();if(['prompt','prompt-with-rationale'].includes(permission.receive))permission=await PushNotifications.requestPermissions();if(run!==generation)return;if(permission.receive!=='granted'){status('Izin notifikasi belum diberikan. Aktifkan melalui Pengaturan Android.');throw Error('Izin notifikasi belum diberikan.')}
     await PushNotifications.createChannel({id:'upu-po-v3',name:'Purchase Order',description:'PO dan chat dengan suara Kedai UPU',sound:'kedai_upu',importance:5,visibility:0});
-    if(run!==generation)return;enabled=true;status('Menghubungkan perangkat ke Firebase...');await PushNotifications.register();
+    if(run!==generation)return;enabled=true;status('Menghubungkan perangkat ke Firebase...');if(candidate){pendingSave=pendingSave.then(()=>saveToken(candidate));await pendingSave}await PushNotifications.register();
    }finally{starting=false}
   },
   async disable(){
    // Do not sign out if server-side token removal fails; avoid delivery to the previous account.
-   enabled=false;generation++;await pendingSave;
+   enabled=false;registeredUser=null;candidate=null;lastAttempt=0;generation++;await pendingSave;
    if(token&&client){const {error}=await client.rpc('po_push_unregister',{device_token:token});if(error){enabled=true;throw Error('Belum dapat menonaktifkan notifikasi. Periksa koneksi sebelum keluar.')}}
    token=null;localStorage.removeItem('upu-push-token');localStorage.removeItem('upu-push-user');user=null;workspace=null;client=null;window.pendingPushOrder=null;window.pendingPushScreen=null;window.pendingPushSupplier=null;
    try{await PushNotifications.removeAllDeliveredNotifications();await PushNotifications.unregister()}catch{}

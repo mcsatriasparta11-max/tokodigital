@@ -8,7 +8,7 @@
   if(role==='admin'&&['Confirmed','Shipped'].includes(status))out.push('eta');
   if((role==='admin'||role==='sales'&&myConfirmed)&&status==='Confirmed')out.push('ship');
   if(internal&&['Confirmed','Shipped'].includes(status))out.push('receive');
-  if(role==='admin'&&status==='Received')out.push('complete');
+  if(internal&&status==='Received')out.push('complete');
   if(internal&&['Draft','AwaitingConfirmation','Confirmed','Shipped'].includes(status))out.push('cancel');
   return out;
  }

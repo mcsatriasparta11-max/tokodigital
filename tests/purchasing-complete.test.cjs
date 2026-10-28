@@ -1,0 +1,2 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),M=require('../dist/workflow-model.js');
+test('Purchasing and Admin can complete only received orders; Sales cannot complete',()=>{for(const role of ['admin','purchasing']){assert(M.actions(role,'Received').includes('complete'));for(const status of ['Draft','AwaitingConfirmation','Confirmed','Shipped','Completed','Cancelled'])assert(!M.actions(role,status).includes('complete'))}assert(!M.actions('sales','Received',true).includes('complete'))});

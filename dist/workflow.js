@@ -346,7 +346,7 @@
  window.POStockContext={client,C};
  window.PO={openStatus,searchProducts,exportProducts,searchDraftSupplier,state:S,monthly,chatInbox,chatSearch:value=>{S.chatSearch=value;updateChatInbox()},openChat,closeChat,sendChat,chatRoom:value=>{if(chatSending)return;S.chatSupplier=value;S.chatDraft='';chatRequest=null;chatPage()},chatDraft:value=>{S.chatDraft=value},openMenu,closeMenu,deleteSupplier,confirmSupplierDelete,enablePush,supplierTemplate,readSupplierImport,commitSupplierImport,registrationForm,register,reviewRegistration,showLogin:loginScreen,go,open,close,action,submitAction,saveDraft,addItem,pickProduct,updateConversion,productTemplate,poTemplate,readPOImport,commitPOImport,supplierChanged,userForm,saveUser,supplierForm,saveSupplier,productForm,saveProduct,readNotification,backup,exportOrders,exportImage,login,logout,readImport,commitImport,
   refresh:(background=false)=>load(background),search:value=>{S.query=value;$('#po-list').innerHTML=table(filtered());updateStatusCounts()},filter:value=>{const previous=$('#main .filters')?.scrollLeft||0;S.filter=value;orderPage();const bar=$('#main .filters');if(bar)bar.scrollLeft=previous;centerStatus(true)}};
- document.addEventListener('visibilitychange',()=>{appVisible=!document.hidden;void accountActivity(appVisible?'online':'offline')});
+ document.addEventListener('visibilitychange',()=>{appVisible=!document.hidden;void accountActivity(appVisible?'online':'offline');if(appVisible&&S.session){load(true);if(chatActive())refreshChat()}});
  window.addEventListener('upu:app-state',event=>{appVisible=!!event.detail?.active;void accountActivity(appVisible?'online':'offline')});
  window.navigate=page=>go(page==='activity'?'notifications':page==='profile'?'account':page==='home'?'dashboard':page);
 
