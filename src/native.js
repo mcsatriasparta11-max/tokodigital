@@ -26,6 +26,7 @@ if (Capacitor.isNativePlatform()) {
   if(window.confirm('Keluar dari aplikasi Kedai UPU?'))App.exitApp();
  });
  App.addListener('appStateChange',({isActive})=>{
+  window.dispatchEvent(new CustomEvent('upu:app-state',{detail:{active:isActive}}));
   if(isActive&&!document.querySelector('#modal')?.open){if(window.PO&&PO.state.page!=='create')PO.refresh();else if(window.Cloud)Cloud.refresh({background:true});}
  });
  window.addEventListener('upu:ready',()=>{if(!window.PO&&typeof window.download==='function')window.download=(name,content,type)=>NativeFiles.save(name,content,type);});
