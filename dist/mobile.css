@@ -105,3 +105,9 @@ h1,h2,h3,.logo b,.stat strong{font-family:inherit}button,input,select,textarea{-
 .notification-row .notification-po{display:block;font-size:12px;font-weight:700;color:#991b1b;overflow-wrap:anywhere;margin:3px 0}
 
 .stock-popover{position:fixed;z-index:80;width:min(350px,calc(100vw - 16px));box-sizing:border-box;background:#fff;border:1px solid #fecaca;border-radius:12px;padding:12px;box-shadow:0 6px 28px #0003;font-size:11px;max-height:230px;overflow:auto}.stock-popover b{color:#991b1b}.stock-popover table{width:100%;table-layout:fixed;border-collapse:collapse;margin:8px 0}.stock-popover th,.stock-popover td{border:1px solid #e5e7eb;padding:5px 3px;text-align:right;font-size:11px;overflow-wrap:anywhere}.stock-popover th{background:#fff1f2}.stock-popover small{color:#64748b;font-size:10px}.stock-import{padding:20px;line-height:1.7}.stock-import input{display:block;margin:16px 0;max-width:100%}
+
+.branch-qty-editor{display:grid;gap:5px}.branch-qty-editor label{font-size:9px;display:block}.branch-qty-editor input{width:100%;min-width:0;padding:5px}.po-items-table:has(th:nth-child(7)){font-size:10px}.po-items-table:has(th:nth-child(7)) td,.po-items-table:has(th:nth-child(7)) th{padding:6px 3px;overflow-wrap:anywhere}
+
+@media(max-width:700px){.po-items-table:has(th:nth-child(7)) th:nth-child(1){width:13%}.po-items-table:has(th:nth-child(7)) th:nth-child(2){width:25%}.po-items-table:has(th:nth-child(7)) th:nth-child(3){width:10%}.po-items-table:has(th:nth-child(7)) th:nth-child(4),.po-items-table:has(th:nth-child(7)) th:nth-child(5),.po-items-table:has(th:nth-child(7)) th:nth-child(6){width:10%}.po-items-table:has(th:nth-child(7)) th:nth-child(7){width:22%}}
+
+.stock-pack-reference{margin:7px 0;padding:7px;border-radius:6px;background:#fff1f2;color:#991b1b;font-size:12px}.forecast-reference{font-weight:700;background:#fff7ed}.forecast-table th{font-size:10px}

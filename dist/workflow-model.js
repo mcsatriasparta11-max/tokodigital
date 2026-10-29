@@ -77,13 +77,13 @@
  }
  function parsePOImport(rows,suppliers,products){
   if(!Array.isArray(rows)||!rows.length||rows.length>10000)throw Error('File harus berisi 1-10.000 baris.');const groups=new Map();
-  rows.forEach((source,index)=>{const row=Object.fromEntries(Object.entries(source).map(([k,v])=>[k.replace(/^\uFEFF/,'').trim().toLowerCase(),v]));for(const key of ['kode barang','nama barang','satuan','qty'])if(!Object.hasOwn(row,key))throw Error('Kolom wajib: Kode Barang,Nama Barang,Satuan,Qty');
-   const product_code=String(row['kode barang']??'').trim(),product=products.find(p=>p.id===product_code),name=String(row['nama barang']??'').trim(),unit=String(row.satuan??'').trim().toUpperCase(),raw=String(row.qty??'').trim(),qty=Number(raw);
+  rows.forEach((source,index)=>{const row=Object.fromEntries(Object.entries(source).map(([k,v])=>[k.replace(/^\uFEFF/,'').trim().toLowerCase(),v]));const combined=['mgr1','mgr2','llg'].every(k=>Object.hasOwn(row,k));for(const key of ['kode barang','nama barang','satuan',...(combined?['mgr1','mgr2','llg']:['qty'])])if(!Object.hasOwn(row,key))throw Error('Kolom wajib: Kode Barang,Nama Barang,Satuan,Qty');
+   const product_code=String(row['kode barang']??'').trim(),product=products.find(p=>p.id===product_code),name=String(row['nama barang']??'').trim(),unit=String(row.satuan??'').trim().toUpperCase(),raw=String(row.qty??'').trim();let branch_qty;if(combined){branch_qty={};for(const b of ['MGR1','MGR2','LLG']){const text=String(row[b.toLowerCase()]??'').trim();if(!/^\d+$/.test(text))throw Error('Baris '+(index+2)+': qty '+b+' wajib angka bulat, isi 0 jika tidak dipesan');branch_qty[b]=Number(text);if(!Number.isSafeInteger(branch_qty[b])||branch_qty[b]>10000000)throw Error('Qty cabang terlalu besar');}}const qty=combined?Object.values(branch_qty).reduce((a,b)=>a+b,0):Number(raw);
    if(!product)throw Error('Baris '+(index+2)+': kode barang '+product_code+' belum terdaftar di master produk.');
    if(!suppliers.some(s=>s.id===product.supplier_id&&s.active))throw Error('Baris '+(index+2)+': supplier produk tidak aktif atau tidak ditemukan.');
    if(!productPack(product).units.includes(unit))throw Error('Baris '+(index+2)+': satuan '+unit+' tidak terdaftar untuk barang '+product_code+'.');
-   if(!/^\d+$/.test(raw))throw Error('Baris '+(index+2)+': qty harus bilangan bulat positif.');validateItems([{name,qty,unit}]);
-   if(!groups.has(product.supplier_id))groups.set(product.supplier_id,[]);groups.get(product.supplier_id).push({product_code,name,unit,qty});
+   if(!combined&&!/^\d+$/.test(raw))throw Error('Baris '+(index+2)+': qty harus bilangan bulat positif.');validateItems([{name,qty,unit}]);
+   if(!groups.has(product.supplier_id))groups.set(product.supplier_id,[]);groups.get(product.supplier_id).push({product_code,name,unit,qty,...(branch_qty?{branch_qty}:{})});
   });if(groups.size>100)throw Error('Maksimal 100 supplier per impor.');return [...groups].map(([supplier_id,items])=>({supplier_id,items}));
  }
  root.POModel={quantityPresentation,labels,actions,today,late,validateItems,parsePOImport,parseMonthlyImport,parseSupplierImport,parsePack,productPack,parseProductImport};
