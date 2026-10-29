@@ -277,6 +277,11 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
   // combined-store-release-check
   await page.evaluate(()=>{Object.assign(window.testData.items[0],{qty:undefined,base_qty:undefined,branch_mode:true});});await page.evaluate(()=>PO.refresh());await page.evaluate(id=>PO.open(id),OID);assert.deepEqual(await page.locator('.po-items-table .numeric').allTextContents(),['Terkunci','Terkunci','Terkunci','Terkunci']);
  });
+
+ await scenario('sales',async page=>{
+  // browser-push-ui-check
+  await page.evaluate(()=>{window.webEnableCalls=0;window.WebPush.enable=async()=>{window.webEnableCalls++}});await page.evaluate(()=>PO.go('account'));await page.locator('.profile').getByRole('button',{name:'Aktifkan notifikasi browser',exact:true}).click();assert.equal(await page.evaluate(()=>window.webEnableCalls),1);await page.evaluate(()=>PO.go('notifications'));assert.equal(await page.locator('#main h1').innerText(),'Notifikasi');
+ });
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
