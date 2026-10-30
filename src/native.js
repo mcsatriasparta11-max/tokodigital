@@ -6,6 +6,7 @@ import { App } from '@capacitor/app';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 if (Capacitor.isNativePlatform()) {
+ window.UPUClientInfo=App.getInfo().then(info=>({platform:'android',version:info.version,build:info.build})).catch(()=>({platform:'android',version:null,build:null}));
  window.NativeStartup=installStartup({systemBars:registerPlugin('SystemBars')});
  document.documentElement.classList.remove('boot-pending');
  installPush();

@@ -1,19 +1,19 @@
 (function(root){
  'use strict';
  const labels={Draft:'Draft',AwaitingConfirmation:'Menunggu Konfirmasi',Confirmed:'Dikonfirmasi',Shipped:'Dikirim',Received:'Diterima',Completed:'Selesai',Cancelled:'Dibatalkan'};
- function actions(role,status,myConfirmed=false){
+ function actions(role,status,myConfirmed=false,stockUnavailable=false){
   const internal=['admin','purchasing'].includes(role),sales=['admin','sales'].includes(role),out=[];
   if(internal&&status==='Draft')out.push('edit','publish');
   if((role==='admin'&&status==='AwaitingConfirmation')||(role==='sales'&&!myConfirmed&&['AwaitingConfirmation','Confirmed','Shipped','Received','Completed'].includes(status)))out.push('confirm');
-  if(role==='admin'&&['Confirmed','Shipped'].includes(status))out.push('eta');
-  if((role==='admin'||role==='sales'&&myConfirmed)&&status==='Confirmed')out.push('ship');
+  if(!stockUnavailable&&role==='admin'&&['Confirmed','Shipped'].includes(status))out.push('eta');
+  if((role==='admin'||role==='sales'&&myConfirmed)&&status==='Confirmed'&&!stockUnavailable)out.push('ship');
   if(internal&&['Confirmed','Shipped'].includes(status))out.push('receive');
   if(internal&&status==='Received')out.push('complete');
   if(internal&&['Draft','AwaitingConfirmation','Confirmed','Shipped'].includes(status))out.push('cancel');
   return out;
  }
  function today(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
- function late(o,day=today()){return Boolean(o.eta&&o.eta<day&&['Confirmed','Shipped'].includes(o.status))}
+ function late(o,day=today()){return Boolean(!o.stock_unavailable&&o.eta&&o.eta<day&&['Confirmed','Shipped'].includes(o.status))}
  function validateItems(items){
   if(!Array.isArray(items)||!items.length||items.length>10000)throw Error('Isi 1–10.000 baris barang.');
   for(const i of items)if(typeof i.name!=='string'||!i.name.trim()||i.name.trim().length>120||!Number.isInteger(i.qty)||i.qty<1||i.qty>10000000||typeof i.unit!=='string'||!i.unit.trim()||i.unit.trim().length>30)throw Error('Nama barang, satuan, dan qty bulat 1–10.000.000 wajib diisi.');
@@ -86,6 +86,7 @@
    if(!groups.has(product.supplier_id))groups.set(product.supplier_id,[]);groups.get(product.supplier_id).push({product_code,name,unit,qty,...(branch_qty?{branch_qty}:{})});
   });if(groups.size>100)throw Error('Maksimal 100 supplier per impor.');return [...groups].map(([supplier_id,items])=>({supplier_id,items}));
  }
- root.POModel={quantityPresentation,labels,actions,today,late,validateItems,parsePOImport,parseMonthlyImport,parseSupplierImport,parsePack,productPack,parseProductImport};
+ function stockActions(role,status,myConfirmed,empty){return status==='Confirmed'&&(role==='admin'||role==='sales'&&myConfirmed)?empty?['stock_empty','stock_ready']:['stock_empty']:[];}
+ root.POModel={stockActions,quantityPresentation,labels,actions,today,late,validateItems,parsePOImport,parseMonthlyImport,parseSupplierImport,parsePack,productPack,parseProductImport};
  if(typeof module!=='undefined')module.exports=root.POModel;
 })(globalThis);

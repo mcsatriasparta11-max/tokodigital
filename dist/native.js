@@ -1590,6 +1590,7 @@
 
   // src/native.js
   if (Capacitor.isNativePlatform()) {
+    window.UPUClientInfo = App.getInfo().then((info) => ({ platform: "android", version: info.version, build: info.build })).catch(() => ({ platform: "android", version: null, build: null }));
     window.NativeStartup = installStartup({ systemBars: registerPlugin("SystemBars") });
     document.documentElement.classList.remove("boot-pending");
     installPush();
