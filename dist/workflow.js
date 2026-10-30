@@ -351,6 +351,7 @@
  async function commitPOImport(){if(!internal()||S.page!=='import-po'||!importOrders.length)return;const data=await command('draft_batch',{orders:importOrders},'Draft PO hasil impor tersimpan.');if(data){importOrders=[];S.page='orders';render()}}
  async function login(form){
   if(loginPending||!form.reportValidity())return;loginPending=true;const submit=form.querySelector('button'),original=submit.innerHTML;submit.disabled=true;submit.innerHTML='<span class="login-ring" aria-hidden="true"></span><span>Memeriksa akun...</span>';form.setAttribute('aria-busy','true');const errorBox=$('#login-error');if(errorBox)errorBox.textContent='';
+  void window.WebPush?.requestOnLogin?.();
   try{const {data,error}=await client.auth.signInWithPassword({email:form.elements.email.value.trim(),password:form.elements.password.value});if(error)throw error;if(!data.session)throw Error('Session unavailable');await opening(async()=>{form.reset();S.session=data.session;await load();void accountActivity('login')},'Menyiapkan dashboard...')}
   catch{const box=$('#login-error');if(box)box.textContent='Login gagal. Periksa email, kata sandi, dan koneksi.'}
   finally{loginPending=false;submit.disabled=false;submit.innerHTML=original;form.removeAttribute('aria-busy')}

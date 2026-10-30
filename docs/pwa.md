@@ -13,3 +13,5 @@ Aplikasi membutuhkan internet untuk PO/chat dan login. Hanya halaman offline pub
 Pengujian lokal: node tests/pwa-browser.cjs serta node --test tests/web-push-sw.test.cjs tests/web-push-client.test.cjs. Pengujian browser mencakup manifest pada subfolder, ukuran ikon, install prompt, fallback offline dan kembali online, serta petunjuk iPhone. Pemasangan/notifikasi pada perangkat iPhone fisik belum diuji.
 
 Referensi: https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/ dan https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest
+
+Saat tombol Masuk ditekan dengan formulir valid, browser diminta menampilkan izin notifikasi jika status masih default. Permintaan dimulai langsung dari interaksi pengguna sebelum menunggu autentikasi; pendaftaran perangkat ke akun baru dilakukan setelah login berhasil. Penolakan, penutupan, atau kegagalan prompt tidak menghalangi login. Izin yang sebelumnya ditolak harus diubah lewat pengaturan browser. iPhone tetap memerlukan PWA terpasang dan dibuka dari layar utama.

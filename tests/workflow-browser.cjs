@@ -329,6 +329,11 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
   // single-product-preserve-check
   await page.evaluate(()=>{window.testData.products=[{id:'OLD',name:'Produk Lama',supplier_id:'SUP1',unit:'PCS',pack_units:['PCS'],pack_factors:[1]}]});await page.evaluate(()=>PO.refresh());await page.evaluate(()=>PO.go('products'));await page.evaluate(()=>PO.productForm());await page.locator('#modal input[name=id]').fill('NEW');await page.locator('#modal input[name=name]').fill('Produk Baru');await page.locator('#modal button[type=submit],#modal button.primary').last().click();await page.waitForFunction(()=>PO.state.data.products.length===2);assert.equal(await page.locator('#product-master-rows tr').count(),2);await page.evaluate(()=>PO.productForm('NEW'));await page.locator('#modal input[name=name]').fill('Produk Diubah');await page.locator('#modal button.primary').click();await page.waitForFunction(()=>PO.state.data.products.some(p=>p.name==='Produk Diubah'));assert.equal(await page.evaluate(()=>PO.state.data.products.some(p=>p.id==='OLD')),true);
  });
+
+ await scenario('guest',async page=>{
+  // login-push-permission-check
+  await page.evaluate(()=>{window.permissionAtLogin=[];window.WebPush.requestOnLogin=()=>{window.permissionAtLogin.push(window.loginCalls||0);return Promise.resolve('denied')};window.pauseLogin=true});await page.locator('#email').fill('user@test.local');await page.locator('#password').fill('TestingPassword123');await page.getByRole('button',{name:'Masuk',exact:true}).click();await page.waitForFunction(()=>window.loginCalls===1);assert.deepEqual(await page.evaluate(()=>window.permissionAtLogin),[0]);await page.evaluate(()=>window.releaseLogin());await page.waitForFunction(()=>!!PO.state.data?.me);assert.equal(await page.evaluate(()=>PO.state.data.me.role),'purchasing');
+ });
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
