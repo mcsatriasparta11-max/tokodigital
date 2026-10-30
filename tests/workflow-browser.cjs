@@ -310,6 +310,15 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
   // supplier-group-ui-check
   await page.evaluate(()=>PO.go('orders'));assert.equal(await page.locator('.po-supplier-group').count(),0);assert.equal(await page.locator('.po-card:visible').count(),1);
  });
+
+ await scenario('purchasing',async page=>{
+  // manual-three-store-ui-check
+  await page.evaluate(()=>PO.go('create'));assert.equal(await page.locator('#po-mode').inputValue(),'normal');await page.locator('.item-name').fill('Barang Manual');await page.locator('.item-qty').fill('6');await page.locator('#draft-form textarea[name=note]').fill('Catatan tiga toko');await page.locator('#po-mode').selectOption('combined');assert.equal(await page.locator('[data-branch=MGR1]').inputValue(),'6');await page.locator('[data-branch=MGR1]').fill('2');await page.locator('[data-branch=MGR2]').fill('3');await page.locator('[data-branch=LLG]').fill('1');assert.equal(await page.locator('.item-qty').inputValue(),'6');assert.equal(await page.locator('.item-name').inputValue(),'Barang Manual');await page.getByRole('button',{name:'Tambah barang',exact:false}).click();assert.equal(await page.locator('[data-branch]').count(),6);await page.locator('.draft-remove').last().click();await page.evaluate(()=>{window.confirm=()=>false});await page.locator('#po-mode').selectOption('normal');assert.equal(await page.locator('#po-mode').inputValue(),'combined');assert.equal(await page.locator('[data-branch=MGR2]').inputValue(),'3');await page.getByRole('button',{name:'Simpan Draft',exact:true}).click();await page.waitForFunction(()=>PO.state.page==='detail');const payload=await page.evaluate(()=>window.calls.find(c=>c.action==='draft').payload);assert.deepEqual(payload.items[0].branch_qty,{MGR1:2,MGR2:3,LLG:1});assert.equal(payload.items[0].qty,6);assert.equal(payload.note,'Catatan tiga toko');assert.deepEqual(await page.locator('.po-items-table th').allTextContents(),['Kode','Nama barang','Satuan','MGR1','MGR2','LLG','Setara satuan dasar']);
+ });
+ await scenario('admin',async page=>{
+  // manual-three-store-ui-check
+  await page.evaluate(()=>PO.go('create'));await page.locator('#po-mode').selectOption('combined');await page.locator('[data-branch=MGR1]').fill('2');await page.locator('[data-branch=MGR2]').fill('4');await page.evaluate(()=>{window.confirm=()=>true});await page.locator('#po-mode').selectOption('normal');assert.equal(await page.locator('.item-qty').inputValue(),'6');assert.equal(await page.locator('[data-branch]').count(),0);assert.equal(await page.locator('#po-mode').inputValue(),'normal');
+ });
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
