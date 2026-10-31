@@ -334,6 +334,11 @@ const fixture=role=>({me:{user_id:UID,name:role==='sales'?'Budi':'Pengelola',ema
   // login-push-permission-check
   await page.evaluate(()=>{window.permissionAtLogin=[];window.WebPush.requestOnLogin=()=>{window.permissionAtLogin.push(window.loginCalls||0);return Promise.resolve('denied')};window.pauseLogin=true});await page.locator('#email').fill('user@test.local');await page.locator('#password').fill('TestingPassword123');await page.getByRole('button',{name:'Masuk',exact:true}).click();await page.waitForFunction(()=>window.loginCalls===1);assert.deepEqual(await page.evaluate(()=>window.permissionAtLogin),[0]);await page.evaluate(()=>window.releaseLogin());await page.waitForFunction(()=>!!PO.state.data?.me);assert.equal(await page.evaluate(()=>PO.state.data.me.role),'purchasing');
  });
+
+ await scenario('purchasing',async page=>{
+  // status-color-check
+  await page.evaluate(()=>{const base=window.testData.orders[0];window.testData.orders=['AwaitingConfirmation','Confirmed','Shipped','Received','Completed'].map((status,i)=>({...base,id:'status-'+i,status,eta:status==='Confirmed'?'2020-01-01':null}));});await page.evaluate(()=>PO.refresh());await page.evaluate(()=>PO.go('dashboard'));const colors=await page.locator('.stat-link[data-po-status]').evaluateAll(els=>els.map(el=>getComputedStyle(el).backgroundColor));assert.equal(new Set(colors).size,colors.length);await page.evaluate(()=>PO.go('orders'));const badges=await page.locator('.mobile-po-list .badge').evaluateAll(els=>els.map(el=>({text:el.textContent,color:getComputedStyle(el).backgroundColor})));assert.equal(new Set(badges.map(b=>b.color)).size,6);assert(badges.some(b=>b.text==='Terlambat'));await page.locator('.chip[data-po-status=Confirmed]').click();assert.equal(await page.locator('.mobile-po-list .po-card').count(),1);assert.equal(await page.locator('.chip.active').getAttribute('data-po-status'),'Confirmed');await page.setViewportSize({width:320,height:740});assert(await page.locator('.workflow-stats').count()===0);await page.screenshot({path:'outputs/po-status-colors-mobile.png',fullPage:true});
+ });
  console.log('PASS:',checks,'real browser scenarios');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(e=>{console.error(e);process.exitCode=1});
